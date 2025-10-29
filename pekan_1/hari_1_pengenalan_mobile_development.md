@@ -24,7 +24,7 @@ Terdapat berbagai konsep umum (UI, state, networking), pengembangan aplikasi web
 
 | Aspek | Web Development | Mobile App Development |
 | :--- | :--- | :--- |
-| Target eksekusi | Browser (DOM, CSS) | Runtime native (Android/iOS, komponen UI native) |
+| Target eksekusi | Browser (DOM) | Runtime native (Android/iOS, komponen UI native) |
 | Distribusi | URL, server deploy | Store (Play/App Store), sideload/enterprise |
 | Update | Server-side, cache invalidation | Client-side, versi aplikasi, review store |
 | UI/UX | DOM, responsif, input mouse/keyboard | Gesture, haptic, pola navigasi native |
