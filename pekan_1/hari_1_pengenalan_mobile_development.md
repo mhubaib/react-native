@@ -195,7 +195,6 @@ export default App;
 ## 5. Referensi
 
 [1] React Native Docs 0.80: Core Components and Native Components. `https://reactnative.dev/docs/0.80/intro-react-native-components`
-[2] Apa Itu Mobile App Development. `https://www.lawencon.com/mobile-app-development/#:~:text=Mobile%20app%20development%20adalah%20proses,%2C%20pengujian%2C%20hingga%20peluncuran%20aplikasi.`
 
 
 ## 6. Evaluasi Harian
