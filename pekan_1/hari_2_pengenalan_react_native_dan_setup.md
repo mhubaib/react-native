@@ -2,154 +2,221 @@
 
 ## 1. Tujuan Pembelajaran
 
-Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
+Setelah menyelesaikan module ini, peserta diharapkan mampu:
 
-* Menjelaskan arsitektur dasar React Native (JavaScript Thread, Native Modules, Bridge).
-* Memahami peran React Native CLI dan perbedaannya dengan Expo.
-* Mengidentifikasi dan menyiapkan prasyarat lingkungan pengembangan (Node.js, JDK, Android Studio/Xcode) untuk React Native CLI versi 0.80.
+- Memahami konsep dasar React Native sebagai framework cross-platform untuk membangun aplikasi mobile native menggunakan JavaScript/TypeScript.
+- Membedakan React Native CLI dan Expo, termasuk perbedaan arsitektur, kelebihan/kekurangan, serta skenario penggunaan optimal untuk masing-masing.
+- Menginstal dan mengonfigurasi environment development lengkap untuk React Native CLI v0.80 pada platform Android dan iOS, termasuk pemahaman fungsi setiap tool/prasyarat.
+- Membuat proyek React Native pertama menggunakan CLI dan menjalankannya di emulator/simulator.
+- Mengidentifikasi potensi isu setup umum (seperti konflik versi) dan solusinya berdasarkan dokumentasi resmi.
+- Menjelaskan mengapa setup CLI lebih cocok untuk proyek kompleks dibandingkan Expo, serta transisi potensial ke Expo jika diperlukan.
+- Memahami struktur folder dan file proyek React Native CLI untuk navigasi yang lebih baik di VS Code.
+
+Tujuan ini membangun fondasi kuat untuk pengembangan selanjutnya, memastikan Anda siap berkontribusi ke proyek real tanpa hambatan teknis awal.
 
 ## 2. Materi Pembelajaran
 
-### A. Arsitektur React Native (New Architecture)
+### Pengenalan React Native
 
-Sejak RN 0.76, arsitektur baru diaktifkan secara default dan dilanjutkan di RN 0.80. Arsitektur ini mengganti *Bridge* lama dengan antarmuka yang lebih cepat dan selaras dengan fitur React 18 untuk pengalaman UI yang lebih responsif dan konsisten [4].
+React Native adalah framework open-source yang dikembangkan oleh Meta (sebelumnya Facebook) sejak 2015, memungkinkan developer membangun aplikasi mobile native untuk iOS dan Android menggunakan JavaScript dan React. Berbeda dengan React (web), React Native merender UI menggunakan komponen native (seperti UIView di iOS atau View di Android), bukan HTML/CSS, sehingga aplikasi terasa "native" dengan performa mendekati aplikasi asli. Keunggulan utama: *code sharing* hingga 90% antar platform, hot reloading untuk development cepat, dan akses ke API native via bridge (JavaScript ke native code).
 
-#### 1) Gambaran Umum
+Di balik layar, React Native menggunakan:
 
-* Pemisahan dunia JavaScript dan Native tetap ada, tetapi cara berkomunikasi berubah dari saluran pesan ter-serialisasi (*Bridge*) menjadi antarmuka memori langsung.
-* Dukungan terhadap fitur React 18 seperti concurrent rendering, Suspense untuk data fetching, Transitions, dan automatic batching.
+- **Yoga Layout Engine**: Untuk cross-platform styling mirip Flexbox.
+- **Metro Bundler**: Packer JS untuk bundling kode dan aset.
+- **New Architecture** (diaktifkan default di v0.80): Menggantikan legacy bridge dengan JSI (JavaScript Interface) untuk komunikasi synchronous, mengurangi latency hingga 50% pada operasi kompleks seperti animasi.
 
-#### 2) Komponen Kunci Arsitektur Baru
+React Native v0.80 (rilis 12 Juni 2025) memperkenalkan dukungan React 19.1 (dengan hooks baru seperti `useOptimistic`), perubahan API JS untuk TypeScript yang lebih ketat, dan freezing legacy architecture untuk mendorong migrasi ke Fabric/TurboModules. Ini membuatnya ideal untuk proyek baru di 2025, dengan dukungan jangka panjang hingga 2027.
 
-* JavaScript Interface (JSI):
-  * Menghapus *Bridge* asinkron yang lama dan memungkinkan JavaScript memegang referensi ke objek C++ secara langsung.
-  * Meminimalkan biaya serialisasi saat memanggil fungsi native, cocok untuk beban data tinggi (mis. pemrosesan kamera real-time).
-* Fabric Renderer:
-  * Renderer UI baru yang selaras dengan model layout React serta mendukung scheduling yang lebih baik.
-  * Memberikan akses layout yang sinkron sehingga menghindari *visual jumps* saat mengukur dan menata ulang tampilan.
-* TurboModules:
-  * Sistem modul native generasi baru dengan inisialisasi dan pemanggilan yang lebih efisien melalui JSI.
-  * Mengurangi overhead dan meningkatkan performa pemanggilan API native.
-* Codegen:
-  * Menghasilkan binding tipe-aman antara JavaScript dan Native (Android/iOS) dari spesifikasi antarmuka.
-  * Mengurangi kesalahan integrasi dan menjaga konsistensi antar platform.
+#### React Native CLI vs Expo: Perbedaan, Kelebihan, Kekurangan, dan Kapan Menggunakan
 
-#### 3) Fitur Konkuren & Layout Sinkron
+React Native CLI dan Expo adalah dua workflow utama untuk memulai proyek. React Native CLI adalah tool resmi dari tim React Native untuk generate proyek "bare" (tanpa framework tambahan), sementara Expo adalah framework/build system yang dibangun di atas React Native untuk simplify development.
 
-* Concurrent Renderer & Automatic Batching:
-  * Mengurangi *re-render* yang tidak perlu dan meningkatkan responsivitas.
-  * Transitions memungkinkan prioritas pembaruan UI, sehingga interaksi penting tetap lancar.
-* Synchronous Layout & Effects:
-  * Mengakses informasi layout secara sinkron untuk merender komponen adaptif tanpa keadaan visual perantara.
-  * Meminimalkan flicker ketika menyesuaikan ukuran/posisi berdasarkan pengukuran.
+**Perbedaan Mendasar**:
 
-#### 4) Implikasi Praktis untuk Proyek
+- **Arsitektur**: CLI menghasilkan proyek dengan akses penuh ke folder native (`ios/` dan `android/`), memungkinkan modifikasi kode Objective-C/Swift (iOS) atau Java/Kotlin (Android). Expo menggunakan "managed workflow" di mana native code disembunyikan; developer berinteraksi via Expo SDK. Expo juga punya "bare workflow" (eject dari managed) yang mirip CLI tapi dengan tools Expo tambahan.
+- **Build Process**: CLI butuh build lokal via Xcode/Android SDK tools; Expo gunakan cloud build (EAS Build) atau Expo Go app untuk testing tanpa build.
+- **Dependencies**: CLI instal library via npm/yarn + manual linking (autolinking di v0.60+); Expo batasi ke Expo SDK-compatible libs, tapi dukung custom native via config plugins.
+- **Development Tools**: CLI gunakan Metro bundler standalone; Expo tambah Expo Dev Tools, OTA updates (over-the-air), dan Expo Router untuk navigation.
 
-* App baru RN 0.80 sudah memakai New Architecture secara default. Beberapa perpustakaan mungkin perlu versi terbaru agar kompatibel dengan Fabric/TurboModules.
-* Kode Anda bisa memerlukan penyesuaian untuk memanfaatkan fitur konkuren dan layout sinkron secara penuh.
-* Jika menghadapi hambatan, Anda dapat mengacu dokumentasi resmi untuk opsi *opt-out* sementara; namun disarankan tetap menggunakan arsitektur baru [4].
+**Kelebihan dan Kekurangan** (Berdasarkan Update 2025):
 
-### B. React Native CLI vs. Expo
+| Aspek | React Native CLI | Expo |
+|-------|------------------|------|
+| **Kelebihan** | - Akses penuh native code untuk custom modules (e.g., AR/VR integration).<br>- Fleksibilitas tinggi untuk performa tweaking (e.g., custom TurboModules).<br>- No vendor lock-in; mudah migrasi ke native apps.<br>- Build lokal cepat untuk tim besar. | - Setup cepat (5 menit vs. 30+ menit CLI).<br>- Expo Go untuk instant preview tanpa build.<br>- OTA updates untuk fix bugs tanpa resubmit ke store.<br>- Rich ecosystem: 100+ pre-built modules (camera, push notifications).<br>- Beginner-friendly dengan docs interaktif. |
+| **Kekurangan** | - Setup kompleks, rawan error konfigurasi.<br>- Build times panjang (10-30 menit per iterasi).<br>- Butuh maintenance native code secara manual.<br>- Kurang dukungan untuk rapid prototyping. | - Dependency pada Expo SDK (update tahunan bisa break code).<br>- Limited native access di managed workflow (harus eject ke bare, yang tambah kompleksitas).<br>- Build cloud gratis terbatas (pro tier $29/bln).<br>- Potensi overhead performa (~5-10% lebih lambat di app kompleks). |
 
-Terdapat dua cara utama untuk memulai proyek React Native:
+**Kapan Menggunakan Masing-Masing**:
 
-| Fitur | React Native CLI | Expo |
-| :--- | :--- | :--- |
-| **Kontrol** | Penuh atas *native code* (Android/iOS) | Terbatas, disembunyikan oleh *framework* |
-| **Akses API** | Akses langsung ke semua API *native* | Terbatas pada API yang disediakan oleh Expo SDK |
-| **Ukuran Aplikasi** | Lebih kecil, hanya menyertakan *native module* yang dibutuhkan | Lebih besar, menyertakan seluruh Expo SDK |
-| **Kompleksitas Setup** | Lebih kompleks (membutuhkan JDK, Android Studio, Xcode) | Sangat mudah, hanya butuh Node.js |
-| **Versi 0.80** | New Architecture default di proyek CLI [4] | Mendukung New Architecture di SDK modern |
+- **Gunakan React Native CLI** jika: Proyek butuh native modules custom (e.g., integrasi hardware khusus seperti Bluetooth LE), performa kritis (gaming apps), atau tim punya expertise native development. Ideal untuk enterprise apps atau saat Expo tidak support lib tertentu. Di 2025, CLI lebih matang dengan New Architecture default.
+- **Gunakan Expo** jika: Beginner/rapid prototyping, MVP (Minimum Viable Product), atau app standar (e-commerce, social). 80% apps baru direkomendasikan Expo karena simplicity; eject ke bare jika butuh custom nanti. Mulai dengan Expo, switch ke CLI hanya jika terpaksa.
 
-Karena modul ini menggunakan **React Native CLI**, kita akan fokus pada *Bare Workflow* yang memberikan kontrol penuh.
+### Setup Environment Menggunakan React Native CLI v0.80
 
-### C. Prasyarat Lingkungan Pengembangan (React Native CLI 0.80)
+Setup CLI memerlukan prasyarat spesifik untuk compile JS ke native binary. Kita fokus pada Android (dengan command-line tools) dan iOS (macOS only). Versi: Node 20+, JDK 17+, Android SDK 35 (API Level 35), Xcode 16+ (untuk iOS 18 support). Ikuti langkah ini secara berurutan; gunakan `npx react-native doctor` (setelah instal CLI) untuk verifikasi.
 
-Untuk React Native 0.80, prasyarat utama untuk pengembangan Android adalah:
+#### Prasyarat Umum dan Alasan Kebutuhan
 
-1. **Node.js:** Versi 18.18 atau yang lebih baru.
-2. **Java Development Kit (JDK):** Versi 17 direkomendasikan.
-3. **Android Studio:** Diperlukan untuk Android SDK dan AVD (Android Virtual Device).
-4. **React Native CLI:** Diinstal secara otomatis saat membuat proyek baru.
-5. **Hermes Engine:** Mesin JavaScript default yang dioptimalkan untuk RN; pastikan aktif untuk performa lebih baik.
+Setiap komponen diperlukan untuk menjembatani JS / TS (React) ke native runtime:
 
-**Langkah-langkah Kunci Setup Android:**
+| Komponen | Versi Rekomendasi (2025) | Alasan Diperlukan |
+|----------|---------------------------|-------------------|
+| **Node.js** | 20.18+ (LTS) | Runtime JS untuk Metro Bundler (packaging kode) dan npm/yarn (dependency management). Tanpa ini, tak bisa run `npx react-native init`. Install via NodeSource atau Homebrew; verifikasi `node -v`. |
+| **Watchman** | 2025.04.21.00+ | File watching tool dari Facebook untuk detect perubahan kode secara efisien (jauh lebih cepat dari native FS watchers). Diperlukan untuk hot reloading; install via Homebrew (`brew install watchman`). |
+| **Yarn** (opsional, tapi direkomendasikan) | 4.5+ | Package manager lebih cepat dan reliable daripada npm untuk monorepo React Native. Gunakan untuk `yarn install`; install via `npm install -g yarn`. |
 
-1. **Instalasi Android Studio:** Unduh dan instal Android Studio.
-2. **Instalasi Android SDK:**
-    * React Native 0.80 membutuhkan **Android SDK Platform 35 (VanillaIceCream)**.
-    * Pastikan **Android SDK Build-Tools 35.0.0** juga terinstal [3].
-3. **Konfigurasi Variabel Lingkungan:**
-    * Setel variabel lingkungan `ANDROID_HOME` ke lokasi SDK Anda (misalnya, `~/Android/Sdk`).
-    * Tambahkan `platform-tools` dan `emulator` ke `PATH` Anda.
+#### Setup untuk Android (Menggunakan Command-Line Tools Saja)
+
+1. **Install JDK 17+**: Oracle JDK atau OpenJDK. Alasan: Gradle (build system Android) butuh Java compiler untuk kompilasi native code. Download dari Oracle, set `JAVA_HOME` env var (e.g., `export JAVA_HOME=/usr/lib/jvm/java-17-openjdk` di Linux). Verifikasi: `java -version`.
+
+2. **Download Android SDK Command-Line Tools**:
+   - Kunjungi <https://developer.android.com/studio#command-tools>, download "Command line tools only" (untuk Windows/Linux/macOS).
+   - Alasan: Paket ini menyediakan `sdkmanager` dan tools dasar untuk manage SDK tanpa IDE berat seperti Android Studio, cocok untuk VS Code workflow.
+
+3. **Extract Paket**:
+   - Extract ke direktori pilihan, e.g., `~/android-sdk` (buat folder jika belum ada).
+   - Pindahkan isi extract ke `~/android-sdk/cmdline-tools/latest/` agar struktur: `cmdline-tools/latest/bin/sdkmanager`.
+   - Alasan: Memastikan tools seperti `sdkmanager` accessible dari command line.
+
+4. **Set Environment Variables**:
+   - Set `ANDROID_HOME` ke root SDK: `export ANDROID_HOME=$HOME/android-sdk` (tambah ke `~/.bashrc` atau `~/.zshrc` untuk permanen).
+   - Tambah ke PATH: `$ANDROID_HOME/cmdline-tools/latest/bin`, `$ANDROID_HOME/platform-tools`, `$ANDROID_HOME/tools` (jika ada).
+   - Verifikasi: `echo $ANDROID_HOME` dan `sdkmanager --version`.
+   - Alasan: Memungkinkan akses tools seperti `adb` (dari platform-tools) dan `sdkmanager` dari mana saja di terminal.
+
+5. **Install Paket SDK via sdkmanager**:
+   - Jalankan: `sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"`.
+   - Accept licenses: `sdkmanager --licenses` (ketik 'y' untuk semua).
+   - **Penjelasan Mengapa Setiap SDK Diperlukan**:
+     - **SDK Platforms (android-35)**: Menyediakan API libraries dan system images untuk build app targeting Android 15 (API 35). Diperlukan React Native untuk kompatibilitas dengan fitur OS terbaru, seperti permissions baru di Android 15, memastikan app compile tanpa error API mismatch.
+     - **Build Tools (35.0.0)**: Berisi tools seperti `aapt2` (resource compiler), `apksigner` (signing APK), dan `zipalign` (optimasi APK). Esensial untuk proses build React Native, di mana Gradle menggunakan ini untuk assemble native code, resource, dan JS bundle menjadi APK/AAB yang valid.
+     - **Platform Tools**: Termasuk `adb` (Android Debug Bridge) untuk install app ke device/emulator, `logcat` untuk debugging logs. Diperlukan untuk testing: `adb install` push app ke device, dan `adb logcat` monitor error runtime di React Native bridge.
+
+Notes: Jika butuh emulator, install `emulator` via `sdkmanager "emulator"` dan buat AVD manual via `avdmanager`. Untuk VS Code, instal extension "React Native Tools" untuk debugging.
+
+#### Setup untuk iOS (macOS Only)
+
+1. **Install Xcode 16+**: Dari App Store. Alasan: Compiler Swift/Objective-C, Simulator iOS, dan signing tools untuk build IPA. Buka Xcode > Preferences > Locations > Command Line Tools: Install jika belum.
+2. **Install CocoaPods 1.15+**: `sudo gem install cocoapods`. Alasan: Dependency manager untuk iOS native libs (e.g., auto-link React modules). Jalankan `pod setup` setelah instal; verifikasi `pod --version`.
+
+#### Instal React Native CLI v0.80 dan Buat Proyek
+
+1. **Hapus package lama(jika ada)**: jalankan `npm uninstall -g react-native-cli @react-native-community/cli`.
+2. **Install package**: Install React Native Community CLI untuk generate project baru, jalankan `npx @react-native-community/cli@latest init AwesomeProject --version 0.80.0` (ganti *AwesomeProject* dengan nama project anda sendiri)
+3. Pastikan nama project menggunakan camelCase / snake_case / PascalCase.
+
+**Catatan Keamanan**: Gunakan VPN jika di belakang proxy; hindari root/sudo kecuali diperlukan.
+
+#### Struktur Folder dan File Proyek React Native CLI
+
+Setelah membuat proyek React Native menggunakan CLI, Anda akan melihat struktur folder standar yang memisahkan kode JS/TypeScript dari native code. Ini memudahkan navigasi di VS Code (gunakan extension untuk syntax highlighting). Berikut ringkasan struktur tipikal untuk proyek "MyFirstApp":
 
 ```bash
-# Contoh konfigurasi di ~/.zshrc atau ~/.bashrc
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
+MyFirstApp/
+├── android/                  # Kode native Android (Java/Kotlin, Gradle config)
+│   ├── app/                  # Sumber kode utama app Android
+│   │   ├── src/main/         # Java/Kotlin files, assets, res (resources seperti drawable)
+│   │   └── build.gradle      # Konfigurasi build app (dependencies, signing)
+│   ├── build.gradle          # Konfigurasi Gradle root (plugins, repositories)
+│   ├── settings.gradle       # Include modules (e.g., app)
+│   └── gradlew               # Wrapper script untuk run Gradle commands
+├── ios/                      # Kode native iOS (Swift/Objective-C, Xcode project) – macOS only
+│   ├── MyFirstApp/           # Xcode project files
+│   │   ├── AppDelegate.mm    # Entry point iOS app
+│   │   └── MyFirstApp.xcworkspace # Workspace untuk CocoaPods
+│   ├── Podfile               # Dependencies iOS via CocoaPods
+│   └── MyFirstAppTests/      # Unit tests iOS
+├── src/ or ./ (root JS files) # Kode JavaScript/TypeScript utama (bisa custom)
+│   ├── App.js                # Komponen utama app (render root view)
+│   ├── index.js              # Entry point JS (register App component ke native)
+│   ├── components/           # Folder opsional untuk reusable UI components
+│   ├── screens/              # Folder opsional untuk screen/page components
+│   └── assets/               # Aset statis (images, fonts, JSON)
+├── node_modules/             # Dependencies npm/yarn (jangan edit manual)
+├── package.json              # Metadata proyek, scripts (e.g., "start"), dependencies React Native
+├── metro.config.js           # Konfigurasi Metro Bundler (bundling JS, resolver paths)
+├── babel.config.js           # Konfigurasi Babel (transpile JSX/TS ke JS)
+├── .gitignore                # Rules untuk Git (ignore node_modules, build outputs)
+├── .eslintrc.js              # Konfigurasi ESLint untuk code linting (opsional)
+├── tsconfig.json             # Konfigurasi TypeScript (jika pakai TS)
+└── README.md                 # Dokumentasi proyek
 ```
 
-4. **Watchman (Opsional, Direkomendasikan):** Alat oleh Facebook untuk memantau perubahan *filesystem* guna meningkatkan performa *bundling*.
-5. **Emulator/Perangkat Fisik:** Uji di berbagai perangkat untuk memvalidasi performa dan kompatibilitas (DPI, versi Android, produsen).
-6. **Dependensi Library:** Gunakan versi pustaka yang kompatibel dengan Fabric/TurboModules (lihat dokumentasi masing-masing library).
+**Penjelasan Singkat**:
+
+- **android/ dan ios/**: Esensial untuk build native; edit jika butuh custom modules (e.g., tambah permissions di AndroidManifest.xml).
+- **JS Files (App.js, index.js)**: Core React Native; edit di VS Code untuk development.
+- **Config Files (package.json, metro.config.js)**: Handle dependencies dan bundling; modifikasi untuk custom setup.
+Struktur ini mendukung cross-platform: Ubah JS sekali, build ke dua platform. Gunakan VS Code's Explorer untuk navigasi cepat.
 
 ## 3. Contoh Implementasi
 
-### A. Membuat Proyek Baru dengan React Native CLI 0.80
+### Contoh: Membuat dan Menjalankan Proyek Pertama
 
-React Native CLI modern tidak lagi diinstal secara global, tetapi digunakan melalui `npx`.
+Asumsikan setup selesai. Kita buat app sederhana "Hello World" dengan tombol.
 
-```bash
-# Ganti MyAwesomeApp dengan nama proyek Anda
-# --version 0.80.0 untuk memastikan versi yang digunakan
-npx @react-native-community/cli@latest init AwesomeProject --version 0.80
-```
+1. **Buat Proyek**:
 
-### B. Menjalankan Aplikasi di Emulator/Simulator
+   ```bash
+   npx @react-native-community/cli@latest init AwesomeProject --version 0.80.0
+   cd AwesomeProject
+   ```
 
-Setelah proyek dibuat, masuk ke direktori proyek dan jalankan perintah:
+2. **Edit App.js** (ganti isi default):
 
-```bash
-cd MyAwesomeApp
+   ```javascript
+   import React, { useState } from 'react';
+   import { View, Text, Button, StyleSheet } from 'react-native';
 
-# Untuk Android
-npx react-native run-android
+   const App = () => {
+     const [count, setCount] = useState(0);
+     return (
+       <View style={styles.container}>
+         <Text style={styles.text}>Hello, React Native v0.80!</Text>
+         <Button title={`Count: ${count}`} onPress={() => setCount(count + 1)} />
+       </View>
+     );
+   };
 
-# Untuk iOS (hanya di macOS)
-npx react-native run-ios
-```
+   const styles = StyleSheet.create({
+     container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+     text: { fontSize: 20, marginBottom: 20 },
+   });
 
-Perintah ini akan:
+   export default App;
+   ```
 
-1. Memulai Metro Bundler (server yang mengkompilasi kode JavaScript).
-2. Membangun aplikasi *native* (menggunakan Gradle untuk Android atau Xcode untuk iOS).
-3. Menginstal aplikasi ke emulator/simulator yang sedang berjalan.
+   - Alasan: Demonstrasi state management (useState) dan native components (View, Text, Button).
 
-## 4. Ringkasan Materi
+3. **Jalankan di Android**:
+   - Start emulator via `avdmanager` (jika setup) atau hubungkan device.
+   - `npx react-native run-android`.
+   - Metro bundler otomatis start di port 8081. Alasan: Compile JS ke bundle, push ke device via ADB (dari platform-tools).
 
-* New Architecture menggantikan *Bridge* lama dengan JSI, serta menghadirkan Fabric renderer, TurboModules, dan Codegen untuk interop yang lebih cepat dan aman.
+4. **Jalankan di iOS** (macOS):
+   - `npx pod-install` (instal dependencies CocoaPods).
+   - `npx react-native run-ios`.
+   - Alasan: Build via Xcode, launch di Simulator.
 
-* Dukungan fitur React 18 (concurrent rendering, Suspense, Transitions, automatic batching) meningkatkan responsivitas dan konsistensi perilaku antara web dan mobile.
-* RN 0.80 mengaktifkan New Architecture secara default; memastikan kompatibilitas pustaka sangat penting sebelum mengadopsi fitur baru secara agresif.
-* CLI vs Expo: CLI memberi kontrol penuh terhadap kode native dan siklus rilis, sementara Expo memudahkan setup namun dengan batasan tertentu. Keduanya kini mendukung New Architecture di versi modern.
-* Setup lingkungan mencakup Node 18+, JDK 17, Android SDK 35, Hermes aktif, serta pengujian di emulator/perangkat fisik.
+**Troubleshooting Contoh**: Jika error "SDK not found", cek `ANDROID_HOME`. Hot reload: Shake device > Reload. Ini verifikasi full stack berjalan.
 
-## 5. Referensi
+## 4. Rangkuman
 
-[1] React Native Docs 0.80: Architecture. `https://reactnative.dev/docs/0.80/architecture-overview`
-[2] React Native Docs 0.80: Get Started with React Native. `https://reactnative.dev/docs/0.80/environment-setup`
-[3] React Native Docs 0.80: Set Up Your Environment (Android). `https://reactnative.dev/docs/0.80/set-up-your-environment`
-[4] React Native: About the New Architecture. `https://reactnative.dev/architecture/landing-page`
+Pada Hari ke-2, kita telah mengenal React Native sebagai bridge JS-native untuk app cross-platform, dengan v0.80 membawa inovasi seperti React 19.1 untuk pengembangan lebih stabil. React Native CLI unggul di fleksibilitas native (pilih jika custom modules), sementara Expo di simplicity (pilih untuk prototyping cepat)—mulai dengan Expo jika ragu, eject nanti. Setup CLI melibatkan Node (JS runtime), JDK/Android SDK cmdline (build tools minimal untuk VS Code), Xcode/CocoaPods (iOS deps), dan Watchman (file watching), semuanya esensial untuk kompilasi dan reloading. Struktur proyek memisahkan native (android/ios) dari JS core, ideal untuk VS Code. Praktikkan dengan proyek "HelloWorld" untuk solidifikasi. Kendala umum: Versi mismatch—selalu jalankan `react-native doctor`. Lanjut ke Hari ke-3 untuk komponen dasar. Selamat coding, dan eksplor docs resmi untuk deep dive!
 
-## 6. Evaluasi Harian
+## Referensi
 
-1. **Jelaskan apa perbedaan antara React Native CLI & Expo dalam mengembangkan aplikasi menggunakan React Native**
+- [9] React Native 0.80 - React 19.1, JS API Changes, Freezing Legacy Architecture. React Native Blog. Diakses dari <https://reactnative.dev/blog/2025/06/12/react-native-0.80> (12 Juni 2025).
+- [15] Expo Documentation: Expo vs. Bare React Native CLI – Key Differences, Pros/Cons, and When to Use Each. Expo Docs. Diakses dari <https://docs.expo.dev/versions/latest/> (Update 2025).
 
-2. **Jelaskan kelebihan & kekurangan dari masing - masing pendekatan dalam mengembangkan aplikasi di React Native & kapan sebaiknya menggunakan salah 1 diantara keduanya?**
+## Evaluasi Harian
 
-3. **Sebutkan keperluan-keperluan dan persyaratan untuk mengembangkan aplikasi menggunakan React Native dan kenapa semua itu diperlukan?**
+1. **Jelaskan konsep dasar React Native sebagai framework cross-platform, termasuk perbedaan utamanya dengan React untuk web. Sertakan penjelasan singkat tentang peran New Architecture di React Native v0.80 dan bagaimana hal itu memengaruhi performa aplikasi mobile.**
 
-4. **Jelaskan langkah-langkah untuk membuat dan menjalankan proyek React Native baru menggunakan CLI. Apa saja tantangan yang mungkin dihadapi dan bagaimana mengatasinya?**
+2. **Bandingkan React Native CLI dan Expo dari segi arsitektur serta proses build. Diskusikan satu kelebihan dan satu kekurangan masing-masing, lalu berikan contoh skenario proyek di mana Anda akan memilih salah satu di atas, beserta alasannya.**  
 
-5. **Jelaskan arsitektur dasar React Native sesuai dengan pemahaman anda**
+3. **Dalam setup environment Android menggunakan command-line tools, jelaskan mengapa SDK Platforms (android-35), Build Tools (35.0.0), dan Platform Tools masing-masing diperlukan untuk React Native. Berikan contoh bagaimana ketidakhadiran salah satu komponen tersebut dapat menyebabkan masalah saat menjalankan proyek pertama Anda di VS Code.**
+
+4. **Bahas prasyarat umum setup React Native CLI v0.80, seperti Node.js, Watchman, dan Yarn, termasuk alasan mengapa masing-masing diperlukan untuk menjembatani JavaScript ke native runtime.**
+
+5. **Deskripsikan struktur folder utama dalam proyek React Native CLI, termasuk fungsi folder `android/`, `ios/`, dan file-file JS seperti `App.js` serta `metro.config.js`. Jelaskan bagaimana struktur ini mendukung pengembangan cross-platform dan navigasi di VS Code.**
