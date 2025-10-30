@@ -144,22 +144,12 @@ Perintah ini akan:
 
 ## 6. Evaluasi Harian
 
-1. **Jelaskan apa itu React Native dan bagaimana arsitektur barunya berbeda dari arsitektur lama yang menggunakan Bridge?**
+1. **Jelaskan apa perbedaan antara React Native CLI & Expo dalam mengembangkan aplikasi menggunakan React Native**
 
-2. **Jelaskan peran JavaScript Interface (JSI) dalam New Architecture React Native dan bagaimana hal ini meningkatkan performa aplikasi?**
+2. **Jelaskan kelebihan & kekurangan dari masing - masing pendekatan dalam mengembangkan aplikasi di React Native & kapan sebaiknya menggunakan salah 1 diantara keduanya?**
 
-3. **Apa yang dimaksud dengan Fabric Renderer dan apa keuntungannya dibandingkan dengan renderer sebelumnya?**
+3. **Sebutkan keperluan-keperluan dan persyaratan untuk mengembangkan aplikasi menggunakan React Native dan kenapa semua itu diperlukan?**
 
-4. **Jelaskan konsep TurboModules dan bagaimana hal ini mempengaruhi cara modul native berinteraksi dengan JavaScript?**
+4. **Jelaskan langkah-langkah untuk membuat dan menjalankan proyek React Native baru menggunakan CLI. Apa saja tantangan yang mungkin dihadapi dan bagaimana mengatasinya?**
 
-5. **Bagaimana fitur concurrent rendering pada React 18 mempengaruhi pengalaman pengguna dalam aplikasi React Native?**
-
-6. **Bandingkan pendekatan pengembangan menggunakan React Native CLI dan Expo. Kapan sebaiknya menggunakan masing-masing pendekatan?**
-
-7. **Jelaskan prasyarat lingkungan pengembangan untuk React Native 0.80 dan mengapa setiap komponen diperlukan?**
-
-8. **Apa yang dimaksud dengan Codegen dalam konteks New Architecture React Native dan mengapa hal ini penting untuk pengembangan aplikasi multi-platform?**
-
-9. **Jelaskan langkah-langkah untuk membuat dan menjalankan proyek React Native baru menggunakan CLI. Apa saja tantangan yang mungkin dihadapi dan bagaimana mengatasinya?**
-
-10. **Bagaimana Synchronous Layout & Effects pada New Architecture membantu mengatasi masalah visual yang sering terjadi pada aplikasi mobile? Berikan contoh kasus penggunaan.**
+5. **Jelaskan arsitektur dasar React Native sesuai dengan pemahaman anda**
