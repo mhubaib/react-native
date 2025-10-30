@@ -12,9 +12,9 @@ Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
 ### A. Definisi Mobile App Development
 
-Mobile App Development adalah proses end-to-end untuk merancang, membangun, menguji, merilis, dan memelihara aplikasi yang berjalan di perangkat mobile seperti smartphone dan tablet. Aplikasi ini ditargetkan untuk platform spesifik (Android/iOS) dan memanfaatkan kemampuan perangkat seperti kamera, GPS, sensor gerak, penyimpanan lokal, notifikasi, hingga proses latar belakang.
+Mobile App Development adalah proses end-to-end untuk merancang, membangun, menguji, merilis, dan memelihara aplikasi yang berjalan di perangkat mobile seperti smartphone dan tablet. Aplikasi ini ditargetkan untuk platform spesifik (Android/iOS) dan memanfaatkan kemampuan perangkat keras seperti kamera, GPS, sensor gerak, penyimpanan lokal, notifikasi, hingga proses latar belakang.
 
-* Fokus utama: pengalaman pengguna yang selaras dengan platform, performa yang stabil pada perangkat beragam, serta kepatuhan terhadap kebijakan distribusi (Play Store/App Store).
+* Fokus utama: pengalaman pengguna yang selaras dengan platform target, performa yang stabil pada perangkat yang beragam, serta kepatuhan terhadap kebijakan distribusi toko aplikasi(Play Store/App Store).
 * Output teknis: paket rilis `APK/AAB` (Android) atau `IPA` (iOS), sertifikat penandatanganan (signing), konfigurasi izin (permissions), dan metadata rilis (ikon, deskripsi, kebijakan privasi).
 * Pendekatan implementasi: native (Kotlin/Swift), hybrid (WebView), atau cross-platform native (React Native/Flutter) yang memanfaatkan komponen UI native.
 
@@ -37,7 +37,42 @@ Terdapat berbagai konsep umum (UI, state, networking), pengembangan aplikasi web
 
 Implikasi praktis: mobile menuntut pengelolaan izin, penanganan jaringan yang fluktuatif, optimasi konsumsi baterai/memori, dan proses rilis yang tunduk pada kebijakan toko aplikasi.
 
-### C. Tahapan dalam Mobile App Development
+### C. Tiga Pendekatan Utama dalam Mobile Development
+
+Pengembangan aplikasi *mobile* secara umum terbagi menjadi tiga kategori utama. Berikut penjelasan detail masing-masing pendekatan, termasuk definisi mendalam, prinsip kerja, dan konteks penggunaan. Setelah itu, disajikan tabel perbandingan keuntungan dan kekurangan untuk memudahkan analisis.
+
+#### 1. Native Development
+
+Native Development melibatkan pembangunan aplikasi secara langsung menggunakan bahasa pemrograman dan alat pengembangan yang dirancang khusus untuk platform target. Untuk Android, ini berarti menggunakan Kotlin atau Java dengan Android Studio, di mana kode di-compile menjadi bytecode yang dijalankan oleh Dalvik/ART runtime. Untuk iOS, Swift atau Objective-C dengan Xcode menghasilkan binary yang dijalankan di dalam ekosistem Apple. Pendekatan ini menekankan integrasi penuh dengan API platform, seperti Core Animation untuk animasi halus di iOS atau Jetpack Compose untuk UI deklaratif di Android. Prosesnya mencakup siklus build terpisah per platform, dengan fokus pada optimalisasi low-level seperti manajemen thread native dan akses langsung ke kernel perangkat. Cocok untuk aplikasi yang memerlukan performa ekstrem, seperti game AAA atau app medis real-time, di mana latensi milidetik krusial.
+
+#### 2. Hybrid Development
+
+Hybrid Development menggabungkan teknologi web standar (HTML, CSS, JavaScript) ke dalam wadah aplikasi native melalui komponen WebView, yang pada dasarnya adalah browser embedded di dalam app. Framework seperti Apache Cordova atau Ionic memungkinkan satu set kode web di-bundle menjadi aplikasi yang dapat diinstal, dengan plugin JavaScript untuk memanggil fungsi native (misalnya, mengakses kamera melalui bridge sederhana). Prinsip kerjanya mirip situs web progresif (PWA), tapi dibungkus agar terlihat seperti app native—kode JS dieksekusi di engine seperti V8 (Android) atau WebKit (iOS), dan interaksi dengan hardware bergantung pada plugin pihak ketiga. Ini ideal untuk aplikasi konten-berat seperti berita atau dashboard admin, di mana kecepatan prototipe lebih penting daripada performa grafis intensif, meskipun sering kali mengorbankan kelancaran gesture native.
+
+#### 3. Cross-Platform Native Development (React Native)
+
+Cross-Platform Native Development memungkinkan pembuatan aplikasi menggunakan satu basis kode tunggal (umumnya JavaScript/TypeScript dengan framework seperti React Native atau Dart dengan Flutter), yang kemudian dirender menjadi komponen UI native asli untuk setiap platform tanpa bergantung pada WebView. Di React Native, misalnya, kode JSX diterjemahkan melalui bridge ke elemen native seperti UIView (iOS) atau View (Android), dengan engine layout seperti Yoga untuk konsistensi Flexbox cross-platform. Prinsipnya adalah "learn once, write anywhere"—kode logika bisnis dibagikan, sementara UI dan akses API disesuaikan secara otomatis atau manual via modul platform-spesifik. Ini melibatkan proses kompilasi di mana JavaScript di-bundle dan dikomunikasikan secara asinkronus ke thread native, menghasilkan aplikasi yang terasa otentik meski dari satu sumber. Pendekatan ini populer untuk startup atau app sosial seperti Instagram, di mana skalabilitas tim developer dan waktu rilis cepat menjadi prioritas, dengan trade-off pada kompleksitas debugging bridge.
+
+| Pendekatan                  | Keuntungan                                                                 | Kekurangan                                                                 |
+|-----------------------------|----------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| **Native Development**     | - Performa maksimal karena akses langsung ke hardware dan API tanpa overhead.<br>- Pengalaman pengguna paling otentik, selaras dengan panduan desain platform (e.g., Material Design).<br>- Kemampuan debugging mendalam dan dukungan komunitas platform resmi yang kuat. | - Memerlukan dua codebase terpisah, meningkatkan waktu dan biaya pengembangan.<br>- Pemeliharaan sulit untuk fitur cross-platform, karena perubahan harus direplikasi manual.<br>- Kurva belajar tinggi untuk developer baru, memerlukan spesialisasi per platform. |
+| **Hybrid Development**     | - Satu codebase untuk multi-platform, mempercepat pengembangan dan prototyping.<br>- Mudah bagi developer web untuk bertransisi, dengan ekosistem JS yang kaya.<br>- Biaya rendah untuk maintenance, karena update sentralisasi. | - Performa lebih rendah karena ketergantungan WebView, menyebabkan lag pada interaksi kompleks.<br>- Pengalaman pengguna kurang native, terasa seperti situs web di app shell.<br>- Akses hardware terbatas dan tidak konsisten, bergantung pada plugin yang mungkin outdated. |
+| **Cross-Platform Native**  | - Satu codebase menghasilkan UI native, mendekati performa native dengan biaya rendah.<br>- Skalabilitas tinggi untuk tim, dengan komunitas besar dan library siap pakai.<br>- Fleksibilitas untuk kustomisasi platform-spesifik tanpa rewrite total. | - Overhead bridge dapat menimbulkan bottleneck pada operasi intensif (e.g., animasi berat).<br>- Debugging lebih kompleks karena melibatkan dua layer (JS dan native).<br>- Potensi inkonsistensi UI jika tidak dikelola dengan baik, meski lebih baik dari hybrid. |
+
+### D. Posisi React Native
+
+React Native (RN) adalah *framework* yang memungkinkan Anda membangun aplikasi *mobile* *cross-platform* dengan filosofi dan sintaks yang sama seperti ReactJS.
+
+| Aspek | ReactJS (Web) | React Native (Mobile) |
+| :--- | :--- | :--- |
+| **Target** | DOM (Document Object Model) | Komponen UI Native (View, Text, Image, dll.) |
+| **Sintaks Dasar** | Sama (JSX) | Sama (JSX) |
+| **Styling** | CSS | JavaScript Objects (mirip Flexbox dan CSS *subset*) |
+| **Komponen** | `<div>`, `<span>`, `<p>`, dll. | `<View>`, `<Text>`, `<Image>`, dll. |
+
+**Inti dari React Native:** RN tidak menghasilkan kode *web* yang berjalan di *browser* tersembunyi. Sebaliknya, kode JavaScript Anda berkomunikasi dengan *runtime* *native* melalui sebuah *bridge* untuk membuat dan memanipulasi elemen UI *native* yang sesungguhnya. Inilah yang membuat aplikasi RN terasa seperti aplikasi *native* sejati.
+
+### E. Tahapan dalam Mobile App Development
 
 Berikut tahapan umum yang direkomendasikan dalam siklus hidup aplikasi mobile:
 
@@ -56,7 +91,7 @@ Berikut tahapan umum yang direkomendasikan dalam siklus hidup aplikasi mobile:
 * Merancang antarmuka yang adaptif terhadap variasi ukuran layar, resolusi, dan pola interaksi pengguna seperti gesture.
 * Mengembangkan sistem desain terpadu, termasuk komponen yang dapat digunakan ulang dan prinsip aksesibilitas untuk mendukung beragam pengguna.
 
-4) Setup Lingkungan & Proyek
+4. Setup Lingkungan & Proyek
 
 * Menyiapkan infrastruktur pengembangan dasar, termasuk lingkungan runtime dan konfigurasi dependensi inti.
 * Menginisialisasi struktur proyek, termasuk pengaturan transpiler, bundler, dan integrasi modul dasar seperti navigasi dan penyimpanan.
@@ -86,41 +121,6 @@ Berikut tahapan umum yang direkomendasikan dalam siklus hidup aplikasi mobile:
 
 * Menganalisis dan memperbaiki isu pasca-rilis, termasuk kompatibilitas dengan pembaruan sistem operasi.
 * Merencanakan iterasi berkelanjutan berdasarkan data penggunaan dan umpan balik untuk peningkatan fitur serta performa.
-
-### D. Tiga Pendekatan Utama dalam Mobile Development
-
-Pengembangan aplikasi *mobile* secara umum terbagi menjadi tiga kategori utama. Berikut penjelasan detail masing-masing pendekatan, termasuk definisi mendalam, prinsip kerja, dan konteks penggunaan. Setelah itu, disajikan tabel perbandingan keuntungan dan kekurangan untuk memudahkan analisis.
-
-#### 1. Native Development
-
-Native Development melibatkan pembangunan aplikasi secara langsung menggunakan bahasa pemrograman dan alat pengembangan yang dirancang khusus untuk platform target. Untuk Android, ini berarti menggunakan Kotlin atau Java dengan Android Studio, di mana kode di-compile menjadi bytecode yang dijalankan oleh Dalvik/ART runtime. Untuk iOS, Swift atau Objective-C dengan Xcode menghasilkan binary yang dijalankan di dalam ekosistem Apple. Pendekatan ini menekankan integrasi penuh dengan API platform, seperti Core Animation untuk animasi halus di iOS atau Jetpack Compose untuk UI deklaratif di Android. Prosesnya mencakup siklus build terpisah per platform, dengan fokus pada optimalisasi low-level seperti manajemen thread native dan akses langsung ke kernel perangkat. Cocok untuk aplikasi yang memerlukan performa ekstrem, seperti game AAA atau app medis real-time, di mana latensi milidetik krusial.
-
-#### 2. Hybrid Development
-
-Hybrid Development menggabungkan teknologi web standar (HTML, CSS, JavaScript) ke dalam wadah aplikasi native melalui komponen WebView, yang pada dasarnya adalah browser embedded di dalam app. Framework seperti Apache Cordova atau Ionic memungkinkan satu set kode web di-bundle menjadi aplikasi yang dapat diinstal, dengan plugin JavaScript untuk memanggil fungsi native (misalnya, mengakses kamera melalui bridge sederhana). Prinsip kerjanya mirip situs web progresif (PWA), tapi dibungkus agar terlihat seperti app native—kode JS dieksekusi di engine seperti V8 (Android) atau WebKit (iOS), dan interaksi dengan hardware bergantung pada plugin pihak ketiga. Ini ideal untuk aplikasi konten-berat seperti berita atau dashboard admin, di mana kecepatan prototipe lebih penting daripada performa grafis intensif, meskipun sering kali mengorbankan kelancaran gesture native.
-
-#### 3. Cross-Platform Native Development (React Native)
-
-Cross-Platform Native Development memungkinkan pembuatan aplikasi menggunakan satu basis kode tunggal (umumnya JavaScript/TypeScript dengan framework seperti React Native atau Dart dengan Flutter), yang kemudian dirender menjadi komponen UI native asli untuk setiap platform tanpa bergantung pada WebView. Di React Native, misalnya, kode JSX diterjemahkan melalui bridge ke elemen native seperti UIView (iOS) atau View (Android), dengan engine layout seperti Yoga untuk konsistensi Flexbox cross-platform. Prinsipnya adalah "learn once, write anywhere"—kode logika bisnis dibagikan, sementara UI dan akses API disesuaikan secara otomatis atau manual via modul platform-spesifik. Ini melibatkan proses kompilasi di mana JavaScript di-bundle dan dikomunikasikan secara asinkronus ke thread native, menghasilkan aplikasi yang terasa otentik meski dari satu sumber. Pendekatan ini populer untuk startup atau app sosial seperti Instagram, di mana skalabilitas tim developer dan waktu rilis cepat menjadi prioritas, dengan trade-off pada kompleksitas debugging bridge.
-
-| Pendekatan                  | Keuntungan                                                                 | Kekurangan                                                                 |
-|-----------------------------|----------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| **Native Development**     | - Performa maksimal karena akses langsung ke hardware dan API tanpa overhead.<br>- Pengalaman pengguna paling otentik, selaras dengan panduan desain platform (e.g., Material Design).<br>- Kemampuan debugging mendalam dan dukungan komunitas platform resmi yang kuat. | - Memerlukan dua codebase terpisah, meningkatkan waktu dan biaya pengembangan.<br>- Pemeliharaan sulit untuk fitur cross-platform, karena perubahan harus direplikasi manual.<br>- Kurva belajar tinggi untuk developer baru, memerlukan spesialisasi per platform. |
-| **Hybrid Development**     | - Satu codebase untuk multi-platform, mempercepat pengembangan dan prototyping.<br>- Mudah bagi developer web untuk bertransisi, dengan ekosistem JS yang kaya.<br>- Biaya rendah untuk maintenance, karena update sentralisasi. | - Performa lebih rendah karena ketergantungan WebView, menyebabkan lag pada interaksi kompleks.<br>- Pengalaman pengguna kurang native, terasa seperti situs web di app shell.<br>- Akses hardware terbatas dan tidak konsisten, bergantung pada plugin yang mungkin outdated. |
-| **Cross-Platform Native**  | - Satu codebase menghasilkan UI native, mendekati performa native dengan biaya rendah.<br>- Skalabilitas tinggi untuk tim, dengan komunitas besar dan library siap pakai.<br>- Fleksibilitas untuk kustomisasi platform-spesifik tanpa rewrite total. | - Overhead bridge dapat menimbulkan bottleneck pada operasi intensif (e.g., animasi berat).<br>- Debugging lebih kompleks karena melibatkan dua layer (JS dan native).<br>- Potensi inkonsistensi UI jika tidak dikelola dengan baik, meski lebih baik dari hybrid. |
-
-### E. Posisi React Native
-
-React Native (RN) adalah *framework* yang memungkinkan Anda membangun aplikasi *mobile* *cross-platform* dengan filosofi dan sintaks yang sama seperti ReactJS.
-
-| Aspek | ReactJS (Web) | React Native (Mobile) |
-| :--- | :--- | :--- |
-| **Target** | DOM (Document Object Model) | Komponen UI Native (View, Text, Image, dll.) |
-| **Sintaks Dasar** | Sama (JSX) | Sama (JSX) |
-| **Styling** | CSS | JavaScript Objects (mirip Flexbox dan CSS *subset*) |
-| **Komponen** | `<div>`, `<span>`, `<p>`, dll. | `<View>`, `<Text>`, `<Image>`, dll. |
-
-**Inti dari React Native:** RN tidak menghasilkan kode *web* yang berjalan di *browser* tersembunyi. Sebaliknya, kode JavaScript Anda berkomunikasi dengan *runtime* *native* melalui sebuah *bridge* untuk membuat dan memanipulasi elemen UI *native* yang sesungguhnya. Inilah yang membuat aplikasi RN terasa seperti aplikasi *native* sejati.
 
 ## 3. Contoh Implementasi
 
