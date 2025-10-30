@@ -65,7 +65,7 @@ React Native (RN) adalah *framework* yang memungkinkan Anda membangun aplikasi *
 
 | Aspek | ReactJS (Web) | React Native (Mobile) |
 | :--- | :--- | :--- |
-| **Target** | DOM (Document Object Model) | Komponen UI Native (View, Text, Image, dll.) |
+| **Target** | Website(Chrome, Firefox, Safari, dll) | OS Mobile (Android/IOS) |
 | **Sintaks Dasar** | Sama (JSX) | Sama (JSX) |
 | **Styling** | CSS | JavaScript Objects (mirip Flexbox dan CSS *subset*) |
 | **Komponen** | `<div>`, `<span>`, `<p>`, dll. | `<View>`, `<Text>`, `<Image>`, dll. |
