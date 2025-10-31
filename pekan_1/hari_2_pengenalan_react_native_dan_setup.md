@@ -158,7 +158,7 @@ Asumsikan setup selesai. Kita buat app sederhana "Hello World" dengan tombol.
 1. **Buat Proyek**:
 
    ```bash
-   npx @react-native-community/cli@latest init AwesomeProject --version 0.80.0
+   npx @react-native-community/cli@latest init AwesomeProject --version 0.80
    cd AwesomeProject
    npx react-native run-android
    ```
