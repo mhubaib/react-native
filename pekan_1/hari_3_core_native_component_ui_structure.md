@@ -12,7 +12,7 @@ Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
 ## 2. Materi Pembelajaran
 
-Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, pola penggunaan, dan pertimbangan platform-spesifik. Kita akan membahas bagaimana komponen-komponen ini saling melengkapi untuk membangun struktur UI: View sebagai fondasi layout, Text dan Image untuk konten visual, TextInput dan Switch untuk interaksi, serta Modal, ImageBackground, dan StatusBar untuk lapisan tambahan.
+Bagian ini memberikan penjelasan lengkap tentang beberapa komponen inti (core components) di React Native. Setiap komponen dibahas secara mendalam, mencakup tujuan (apa fungsinya), props utama (properti yang bisa disetel), dan pola penggunaan (cara menggunakannya dalam kode). Komponen-komponen ini saling melengkapi untuk membangun antarmuka pengguna (UI) yang solid: View sebagai dasar layout, Text dan Image untuk menampilkan konten visual, TextInput dan Switch untuk interaksi pengguna, serta Modal, ImageBackground, dan StatusBar untuk lapisan tambahan seperti overlay dan pengaturan sistem.
 
 ### A. View: Fondasi Layout dengan Flexbox
 
@@ -38,7 +38,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### B. Text: Penanganan Teks yang Fleksibel
 
-**Tujuan:** Text menampilkan teks dengan dukungan nesting, styling, dan interaksi. Ini mendukung wrapping alami dan aksesibilitas, ideal untuk label, paragraf, atau teks interaktif.
+**Tujuan:** Text digunakan untuk menampilkan teks dengan dukungan nesting (teks bertingkat), styling, dan penanganan sentuhan. Ini memungkinkan pemformatan teks tanpa API native rumit.
 
 **Props Kunci:**
 
@@ -59,7 +59,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### C. Image: Menampilkan Gambar dengan Caching
 
-**Tujuan:** Image menangani gambar dari URL, aset lokal, atau data URI, dengan dukungan resize, caching, dan event loading untuk UI visual kaya.
+**Tujuan:** Image menampilkan gambar dari URL jarak jauh, aset statis, atau file lokal. Ia mendukung loading progresif, caching, dan responsif.
 
 **Props Kunci:**
 
@@ -79,7 +79,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### D. TextInput: Input Pengguna yang Kuat
 
-**Tujuan:** TextInput memungkinkan entry teks dengan keyboard custom, validasi, dan event focus untuk form interaktif.
+**Tujuan:** TextInput menangkap input teks dari pengguna melalui keyboard on-screen. Dukung single/multiline, auto-correct, dan event kustom.
 
 **Props Kunci:**
 
@@ -100,7 +100,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### E. ImageBackground: Latar Belakang Gambar
 
-**Tujuan:** Wrapper Image untuk background dengan children overlay, ideal untuk hero sections atau card dengan gambar latar.
+**Tujuan:** ImageBackground menjadikan gambar sebagai latar belakang untuk elemen lain, mirip CSS background-image. Ia merender Image di dalamnya.
 
 **Props Kunci:** Mewarisi dari Image (source, style, resizeMode). Tambahan: `imageRef` untuk akses node Image internal.
 
@@ -110,7 +110,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### F. Modal: Overlay Konten
 
-**Tujuan:** Tampilkan konten di atas view utama, seperti dialog atau full-screen overlay.
+**Tujuan:** Modal menampilkan konten di atas layar utama, seperti dialog atau full-screen overlay, dengan animasi masuk.
 
 **Props Kunci:**
 
@@ -128,7 +128,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### G. StatusBar: Kustomisasi Bar Atas
 
-**Tujuan:** Kontrol tampilan status bar (waktu, baterai) untuk integrasi UI.
+**Tujuan:** StatusBar mengontrol tampilan dan visibilitas bilah status sistem (waktu, baterai, dll.) di bagian atas layar.
 
 **Props Kunci:**
 
@@ -145,7 +145,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props, 
 
 ### H. Switch: Toggle Boolean
 
-**Tujuan:** Input boolean sederhana untuk pengaturan seperti on/off.
+**Tujuan:** Switch adalah tombol toggle boolean (ya/tidak) yang dikontrol oleh state. Ia memerlukan callback untuk update nilai.
 
 **Props Kunci:**
 
