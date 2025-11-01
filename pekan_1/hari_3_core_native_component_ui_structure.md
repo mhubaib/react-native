@@ -340,7 +340,7 @@ Dengan mengintegrasikan komponen-komponen ini, Anda dapat menciptakan UI mobile 
 
 ### Soal Praktik
 
-**Buat contoh penggunaan semua core component yang telah dipelajari diatas, sertakan contoh penggunaan semua props defaultnya!**
+- **Buat contoh penggunaan semua core component yang telah dipelajari diatas, sertakan contoh penggunaan semua props defaultnya!**
 
 ### Ketentuan
 
