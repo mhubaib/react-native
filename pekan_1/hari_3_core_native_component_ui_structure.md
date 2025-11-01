@@ -309,7 +309,20 @@ export default HeroSection;
 
 ## 4. Ringkasan Materi
 
-Hari ke-3 memperkenalkan fondasi UI React Native melalui komponen inti dan native: View untuk struktur flexbox, Text untuk konten teks, Image untuk visual statis, TextInput untuk input dinamis, ImageBackground untuk latar kreatif, Modal untuk interupsi, StatusBar untuk integrasi sistem, dan Switch untuk toggle sederhana. Kunci sukses: Gunakan controlled components dengan state, prioritaskan aksesibilitas (accessible, accessibilityLabel), dan optimasi performa (StyleSheet, caching). Integrasi ini memungkinkan pembuatan UI mobile yang native, responsif, dan user-friendly.
+Pada Hari ke-3, kita mempelajari dasar-dasar UI (User Interface) di React Native melalui komponen-komponen inti dan native. Komponen ini membentuk fondasi untuk membangun tampilan aplikasi mobile yang sederhana namun kuat. Berikut adalah penjelasan singkat mengenai masing-masing komponen:
+
+### Komponen Inti dan Native
+
+- **View**: Digunakan untuk membangun struktur layout dengan sistem flexbox, seperti container utama untuk elemen-elemen lain.
+- **Text**: Menampilkan konten teks statis atau dinamis, seperti label, judul, atau paragraf.
+- **Image**: Menampilkan gambar statis dari sumber lokal atau jaringan, untuk menambahkan elemen visual.
+- **TextInput**: Memungkinkan input teks dinamis dari pengguna, seperti form login atau pencarian.
+- **ImageBackground**: Menjadikan gambar sebagai latar belakang kreatif untuk elemen lain, seperti header atau card.
+- **Modal**: Membuat jendela pop-up untuk interupsi sementara, seperti konfirmasi atau detail tambahan.
+- **StatusBar**: Mengintegrasikan elemen sistem seperti status bar ponsel untuk tampilan yang lebih native.
+- **Switch**: Komponen toggle sederhana untuk pilihan on/off, seperti pengaturan notifikasi.
+
+Dengan mengintegrasikan komponen-komponen ini, Anda dapat menciptakan UI mobile yang terasa native, responsif terhadap berbagai perangkat, dan ramah pengguna. Latihan lebih lanjut akan membantu menguasai kombinasi antar-komponen ini.
 
 **Referensi:**
 
