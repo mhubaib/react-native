@@ -102,7 +102,7 @@ Notes: Jika butuh emulator, install `emulator` via `sdkmanager "emulator"` dan b
 #### Install React Native CLI v0.80 dan Buat Proyek
 
 1. **Hapus package lama(jika ada)**: jalankan `npm uninstall -g react-native-cli @react-native-community/cli`.
-2. **Install package**: Install React Native Community CLI untuk generate project baru, jalankan `npx @react-native-community/cli@latest init AwesomeProject --version 0.80.0` (ganti *AwesomeProject* dengan nama project anda sendiri)
+2. **Install package**: Install React Native Community CLI untuk generate project baru, jalankan `npx @react-native-community/cli@latest init AwesomeProject --version 0.80` (ganti *AwesomeProject* dengan nama project anda sendiri)
 3. Pastikan nama project menggunakan camelCase / snake_case / PascalCase.
 
 **Catatan Keamanan**: Gunakan VPN jika di belakang proxy; hindari root/sudo kecuali diperlukan.
@@ -220,3 +220,10 @@ Pada Hari ke-2, kita telah mengenal React Native sebagai bridge JS-native untuk 
 4. **Bahas prasyarat umum setup React Native CLI v0.80, seperti Node.js, Watchman, dan Yarn, termasuk alasan mengapa masing-masing diperlukan untuk menjembatani JavaScript ke native runtime.**
 
 5. **Deskripsikan struktur folder utama dalam proyek React Native CLI, termasuk fungsi folder `android/`, `ios/`, dan file-file JS seperti `App.js` serta `metro.config.js`. Jelaskan bagaimana struktur ini mendukung pengembangan cross-platform dan navigasi di VS Code.**
+
+## Ketentuan
+
+```md
+- Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
+- Soal wajib dikerjakan mandiri sesuai instruksi
+```  

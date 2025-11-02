@@ -218,3 +218,10 @@ export default App;
 9. **Uraikan tahapan Pengujian dan Build, Signing, serta Release dalam Mobile App Development menggunakan React Native!**
 
 10. **Berdasarkan penjelasan diatas, jelaskan kenapa React native menjadi pilihan dalam development application mobile saat ini?**
+
+## Ketentuan
+
+```md
+- Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
+- Soal wajib dikerjakan mandiri sesuai instruksi
+```  

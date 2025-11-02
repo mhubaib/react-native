@@ -294,11 +294,9 @@ Hari ke-5 membangun kemampuan gesture handling melalui Button untuk sederhana, P
 
 ## 5. Evaluasi Harian: Soal Praktik
 
-### Soal Praktik
+- **Buat contoh penggunaan semua core component yang telah dipelajari pada materi kali ini, sertakan contoh penggunaan semua props defaultnya!**
 
-**Buat contoh penggunaan semua core component yang telah dipelajari pada materi kali ini, sertakan contoh penggunaan semua props defaultnya!**
-
-### Ketentuan
+## Ketentuan
 
 ```md
 - Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan

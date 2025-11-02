@@ -4,14 +4,12 @@
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
-- Memahami peran ScrollView sebagai dasar scrolling sederhana, FlatList untuk daftar datar virtualized, SectionList untuk daftar bersection dengan header/footer, dan RefreshControl untuk pull-to-refresh interaktif.
+- Memahami peran ScrollView sebagai dasar scrolling sederhana, FlatList untuk daftar data yang di virtualisasikan, SectionList untuk daftar bersection dengan header/footer, dan RefreshControl untuk pull-to-refresh interaktif.
 - Mengimplementasikan list efisien dengan data array, renderItem custom, dan optimasi seperti getItemLayout untuk scrolling lancar tanpa layout shift.
 - Mengintegrasikan fitur lanjutan seperti sticky headers, separators, viewability callbacks, dan pull-to-refresh dengan state management untuk UX dinamis.
 - Menerapkan praktik terbaik termasuk aksesibilitas (VoiceOver/TalkBack support), performa (removeClippedSubviews, windowSize), dan penanganan perbedaan platform (e.g., stickySectionHeadersEnabled di iOS vs Android).
 - Membangun prototipe seperti daftar kontak bergrup dengan refresh, yang siap untuk integrasi API nyata.
 - Menganalisis dan debug isu umum, seperti jank pada scroll atau missing items pada clipped views, untuk list yang robust dan scalable.
-
-Tujuan ini selaras dengan filosofi React Native: Efisiensi melalui virtualisasi, di mana hanya item visible yang dirender, memastikan performa tinggi pada perangkat low-end.
 
 ## 2. Materi Pembelajaran
 
@@ -19,7 +17,7 @@ Bagian ini menjelaskan setiap komponen secara mendalam, termasuk tujuan, props k
 
 ### A. ScrollView: Scrolling Dasar untuk Konten Terbatas
 
-**Tujuan:** ScrollView adalah wrapper sederhana untuk konten yang melebihi layar, mendukung horizontal/vertical scroll dengan bouncing (iOS) dan over-scroll (Android). Cocok untuk list pendek (<100 item); tidak virtualized, jadi render semua children sekaligus—hindari untuk data besar.
+**Tujuan:** ScrollView adalah wrapper sederhana untuk konten yang melebihi layar, mendukung horizontal/vertical scroll dengan bouncing (iOS) dan over-scroll (Android). Cocok untuk list pendek (<50 item); tidak virtualized, jadi render semua children sekaligus—hindari untuk data besar.
 
 **Props Kunci:**
 | Prop | Tipe | Deskripsi | Default | Catatan Platform |
@@ -293,11 +291,9 @@ Hari ke-4 membangun kemampuan mengelola list item melalui ScrollView untuk dasar
 
 ## 5. Evaluasi Harian: Soal Praktik
 
-### Soal Praktik
+- **Buat contoh penggunaan semua core component yang telah dipelajari diatas, sertakan contoh penggunaan semua props defaultnya!**
 
-**Buat contoh penggunaan semua core component yang telah dipelajari diatas, sertakan contoh penggunaan semua props defaultnya!**
-
-### Ketentuan
+## Ketentuan
 
 ```md
 - Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan

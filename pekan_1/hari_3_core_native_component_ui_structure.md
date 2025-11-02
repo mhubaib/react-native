@@ -338,8 +338,6 @@ Dengan mengintegrasikan komponen-komponen ini, Anda dapat menciptakan UI mobile 
 
 ## 5. Evaluasi Harian: Soal Praktik
 
-### Soal Praktik
-
 - **Buat contoh penggunaan semua core component yang telah dipelajari diatas, sertakan contoh penggunaan semua props defaultnya!**
 
 ### Ketentuan
