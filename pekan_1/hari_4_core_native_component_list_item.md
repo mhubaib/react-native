@@ -299,3 +299,7 @@ Hari ke-4 membangun kemampuan mengelola list item melalui ScrollView untuk dasar
 - Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
 - Soal wajib dikerjakan mandiri sesuai instruksi
 ```  
+
+---
+
+**Mobile App Development With React Native*

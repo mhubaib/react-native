@@ -225,3 +225,7 @@ export default App;
 - Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
 - Soal wajib dikerjakan mandiri sesuai instruksi
 ```  
+
+---
+
+**Mobile App Development With React Native*

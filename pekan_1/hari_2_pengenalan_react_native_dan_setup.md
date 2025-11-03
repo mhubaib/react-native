@@ -227,3 +227,7 @@ Pada Hari ke-2, kita telah mengenal React Native sebagai bridge JS-native untuk 
 - Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
 - Soal wajib dikerjakan mandiri sesuai instruksi
 ```  
+
+---
+
+**Mobile App Development With React Native*
