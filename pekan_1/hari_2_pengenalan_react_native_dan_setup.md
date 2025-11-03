@@ -85,7 +85,7 @@ Setiap komponen diperlukan untuk menjembatani JS / TS (React) ke native runtime:
    - Alasan: Memungkinkan akses tools seperti `adb` (dari platform-tools) dan `sdkmanager` dari mana saja di terminal.
 
 5. **Install Paket SDK via sdkmanager**:
-   - Jalankan: `sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"`.
+   - Jalankan: `sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "platform-tools" "ndk;27.1.12297006"`.
    - Accept licenses: `sdkmanager --licenses` (ketik 'y' untuk semua).
    - **Mengapa Setiap SDK Diperlukan**:
      - **SDK Platforms (android-35)**: Menyediakan API libraries dan system images untuk build app targeting Android 15 (API 35). Diperlukan React Native untuk kompatibilitas dengan fitur OS terbaru, seperti permissions baru di Android 15, memastikan app compile tanpa error API mismatch.
