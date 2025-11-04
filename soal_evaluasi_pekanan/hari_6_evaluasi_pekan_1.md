@@ -21,7 +21,7 @@
 - Judul proyek: Mini E-Commerce.
 - Deskripsi singkat: Bangun satu halaman yang menampilkan daftar produk dengan gambar, nama, harga, dan deskripsi singkat. Sediakan tombol untuk menambah produk melalui sebuah modal berisi form. Gambar produk diambil dari sumber online (URL gambar).
 - Fitur wajib:
-  - Daftar produk: tampilkan minimal 5 produk awal (boleh data statis awal) dengan gambar (URL), nama, harga, deskripsi.
+  - Daftar produk: tampilkan minimal 10 produk awal (boleh data statis awal) dengan gambar (URL), nama, harga, deskripsi.
   - Tambah produk: sebuah tombol yang membuka modal berisi form dengan bidang minimal: Nama Produk (wajib), Harga (wajib, angka), URL Gambar (wajib, valid), Deskripsi (opsional). Setelah submit, produk baru muncul di daftar.
   - Modal: dapat dibuka/ditutup dengan jelas; submit hanya jika valid; ada umpan balik dasar saat data tidak valid.
   - Gambar dari online: gunakan URL gambar (misal CDN atau placeholder) dan pastikan tampil konsisten.
