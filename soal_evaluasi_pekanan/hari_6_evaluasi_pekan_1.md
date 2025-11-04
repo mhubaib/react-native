@@ -55,3 +55,14 @@
 - Gambar online: uji beberapa URL gambar agar tampil konsisten; siapkan placeholder jika URL gagal dimuat.
 - Uji kasus utama: tambah produk valid, input tidak valid, tutup modal tanpa submit, dan cek produk muncul sesuai harapan.
 - Jaga sederhana: styling minimal, tekankan fungsi dan keterbacaan.
+
+## Ketentuan
+
+```md
+- Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
+- Soal wajib dikerjakan mandiri sesuai instruksi
+```  
+
+---
+
+**Mobile App Development With React Native*
