@@ -1,233 +1,716 @@
-# Hari ke-8 - Membuat Layout Flexible & Responsive di React Native
+# Hari ke-8: Membuat Layout Flexible & Responsive di React Native
 
-## 1. Tujuan Pembelajaran
+## Tujuan Pembelajaran
 
-Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
+Setelah menyelesaikan materi pembelajaran hari ini, siswa diharapkan mampu:
 
-- Menerapkan teknik conditional sizing dan percentage-based layouts untuk membuat UI yang otomatis menyesuaikan dengan screen width/height, menghindari fixed pixels yang menyebabkan overflow atau white space berlebih di berbagai perangkat.
-- Mengimplementasikan orientation dan foldable handling menggunakan Dimensions API (useWindowDimensions hook dan event listeners) untuk switch layout secara dinamis, seperti dari single-column portrait ke multi-column landscape.
-- Mengintegrasikan react-native-safe-area-context untuk dynamic safe area insets, memastikan konten tidak ter-clip oleh notch, status bar, atau gesture navigation, sambil menjaga Flexbox layout tetap fleksibel (e.g., padding adaptif).
-- Menerapkan praktik terbaik seperti gap utilities dalam Flexbox untuk spacing responsif, media query-like logic via width thresholds, dan memoization untuk menghindari re-calculation berlebih saat rotasi atau unfold.
-- Mengelola platform-specific behaviors, seperti iOS Dynamic Island insets vs Android gesture nav, untuk UI edge-to-edge yang konsisten tanpa layout shift.
-- Membangun prototipe responsif seperti e-commerce grid yang beradaptasi dari 1-kolom di phone portrait ke 4-kolom di tablet landscape, dengan safe areas terintegrasi.
-- Menganalisis dan debug isu seperti misalignment saat orientation change atau clipping di foldables, untuk layout yang performant (60fps) dan user-centric.
+- Mengaplikasikan kombinasi properti Flexbox lanjutan (seperti `flexWrap`, `alignContent`, dan `justifyContent` dengan variasi) untuk membangun layout yang otomatis menyesuaikan dengan konten dinamis, termasuk handling overflow dan distribusi ruang yang optimal di skenario multi-item.
+- Memanfaatkan hook `useWindowDimensions` dan fungsi `PixelRatio` secara efisien untuk mendeteksi dan merespons perubahan ukuran layar/orientasi secara real-time, termasuk integrasi dengan state management untuk re-rendering yang smooth.
+- Merancang sistem conditional styling menggunakan helper functions yang modular, sehingga kode tetap clean dan scalable untuk aplikasi kompleks.
+- Mengintegrasikan `react-native-safe-area-context` dari setup hingga advanced usage, termasuk handling edge cases seperti modal atau nested navigators, serta memahami dampaknya terhadap performa aplikasi.
+- Menguji dan mengoptimalkan layout di berbagai simulator/emulator (iOS/Android, portrait/landscape) untuk memastikan konsistensi UX, dengan metrik seperti waktu render dan memory usage sebagai benchmark.
 
-## 2. Materi Pembelajaran
+Tujuan ini dirancang agar Anda tidak hanya paham "cara", tapi juga "mengapa" dan "kapan" menerapkannya, sehingga bisa adaptasi ke proyek real-world.
 
-Materi hari ini menjelaskan teknik design flexible & responsive secara mendalam, dengan fokus pada strategi adaptasi daripada konsep dasar Flexbox. Teknik melibatkan kombinasi Dimensions untuk awareness, conditional logic untuk variasi, dan react-native-safe-area-context untuk insets dinamis. Per 2025, best practices menekankan relative units (%/vw-like via width) dan hooks untuk zero-config re-renders. Integrasikan dengan StyleSheet dari Hari 7 untuk performance.
+## Materi Pembelajaran
 
-### A. Teknik Conditional Sizing dan Percentage-Based Layouts: Adaptasi Berdasarkan Screen Size
+### 1. Teknik Merancang Layout Flexible dengan Flexbox Lanjutan
 
-**Tujuan:** Teknik ini memungkinkan layout yang "self-adjusting" tanpa fixed dimensi, menggunakan percentage widths/heights dan thresholds untuk simulasi CSS media queries, sehingga UI scale di phone (e.g., 320px) ke tablet (e.g., 1024px).
+Flexbox di React Native adalah fondasi utama untuk layout fleksibel, tapi level lanjutan melibatkan strategi untuk menangani konten yang unpredictable (misalnya, teks panjang atau gambar variabel). Bayangkan Flexbox seperti sungai: alur utama (main axis) mengalir item, dan sumbu silang (cross axis) mengatur posisi vertikal/horizontal. Kunci fleksibilitas adalah membuat item "mengalir" tanpa memaksa ukuran tetap.
 
-**Props dan Hooks Kunci (untuk Integrasi Flexbox):**
+- **Menggunakan `flexWrap` untuk Layout Multi-Barang (Deep Dive)**:
+  - `flexWrap: 'wrap'` (atau `'nowrap'` default) memungkinkan item melipat ke baris baru saat melebihi lebar container. Ini krusial untuk daftar dinamis, seperti galeri foto yang jumlahnya berubah berdasarkan API response.
+  - **Step-by-Step Cara Kerja**:
+    1. Container punya `flexDirection: 'row'` (horizontal flow).
+    2. Setiap child punya `flex: 1` atau `width: 'auto'` agar ukuran alami.
+    3. Saat total width child > container width, item terakhir pindah ke baris baru.
+  - **Pitfalls & Solusi**: Jika wrap menyebabkan item terlalu sempit (misalnya teks overflow), tambahkan `minWidth` pada child. Contoh snippet:
 
-| Teknik/Prop | Tipe | Deskripsi | Default | Catatan & Pola Penggunaan |
-|-------------|------|-----------|---------|---------------------------|
-| `width`/`height` | string ('%') atau number | Relative sizing: '50%' dari parent atau screen width. | 'auto' | Pola: width: `${100 / numCols}%` di Flexbox row; hindari px—gunakan untuk cards yang shrink di small screens. |
-| `flexBasis` | string/number ('%') | Initial size flex item; kombinasikan dengan flexWrap untuk wrap responsif. | 'auto' | Pola: flexBasis: width > 600 ? '25%' : '50%' untuk grid; auto-adjust kolom berdasarkan available space. |
-| Conditional via `useWindowDimensions()` | Hook: {width, height} | Threshold logic: if (width < 400) single layout else multi. | - | Pola: const isTablet = width > 768; style: { flexDirection: isTablet ? 'row' : 'column' }; re-render otomatis saat resize. |
-| `gap`/`rowGap`/`columnGap` | number/string ('%') | Spacing responsif di Flexbox; scale dengan screen untuk proportional gutters. | 0 | Pola: gap: width * 0.02 (2% screen) untuk adaptive padding; RN 0.75+: Optimized untuk wrapped layouts, cegah margin collapse. |
-
-**Pola Penggunaan:** Gunakan useWindowDimensions() di root component untuk global thresholds; apply conditional styles di child Flexbox (e.g., numColumns di FlatList = Math.floor(width / 200)). Pola hybrid: Percentage + flexGrow untuk fill space tanpa overflow—ideal untuk hero sections yang stretch di landscape.
-
-**Praktik Terbaik (2025):** Definisikan breakpoints di constants (e.g., { phone: 320, tablet: 768 }); gunakan useMemo untuk conditional styles agar hindari re-calc di setiap render. Test di device: Percentage cegah zoom issues di accessibility mode. Integrasi Flexbox: Wrap dengan gap untuk clean, scalable grids tanpa manual margins.
-
-**Pertimbangan Platform:** Android: Percentage heights butuh explicit parent height; iOS: Smooth scaling di split-view iPad. Foldables: Thresholds handle unfold (width jumps dari 360px ke 800px).
-
-### B. Orientation dan Foldable Handling: Dynamic Updates dengan Event Listeners
-
-**Tujuan:** Teknik ini memastikan UI berubah mulus saat rotasi atau unfold foldable, menggunakan listeners untuk trigger re-layout tanpa manual intervention.
-
-**Methods dan Hooks Kunci:**
-
-| Teknik/Method | Tipe | Deskripsi | Default | Catatan & Pola Penggunaan |
-|---------------|------|-----------|---------|---------------------------|
-| `useWindowDimensions()` | Hook | Auto re-render saat orientation change; return {width, height, scale}. | - | Pola: Gunakan height > width ? 'portrait' : 'landscape' untuk switch justifyContent; preferred > manual listeners untuk simplicity. |
-| `Dimensions.addEventListener('change', handler)` | Event: {window: {width, height}} | Manual subscribe ke resize events (rotasi, keyboard open, fold). | - | Pola: useEffect untuk setState(layoutType); cleanup subscription di return; kombinasikan dengan Flexbox flexDirection conditional. |
-| Foldable Detection | width threshold (e.g., >600) | Deteksi unfold via width spike; apply multi-pane layout. | - | Pola: if (width > 800) { splitView: true } di Flexbox row; RN 0.75+: Event 'change' fire saat hinge angle ubah. |
-
-**Pola Penggunaan:** Hook di component utama: const orientation = height > width ? 'portrait' : 'landscape'; style: { flexWrap: orientation === 'landscape' ? 'wrap' : 'nowrap' }. Pola foldable: Listener update state untuk side-by-side panels di unfolded mode.
-
-**Praktik Terbaik (2025):** Gunakan hook untuk auto-handling; debounce listeners jika kompleks (e.g., via lodash). Test rotasi: Lock orientation di simulator, unlock untuk verify no jank. Integrasi Flexbox: Gunakan alignContent 'stretch' untuk fill new space post-rotasi.
-
-**Pertimbangan Platform:** iOS: Event fire saat split-view resize; Android: Foldable API di 15+ (use WindowManager untuk hinge); keduanya dukung keyboard-induced changes.
-
-### C. react-native-safe-area-context: Dynamic Safe Area Insets untuk Edge-to-Edge Design
-
-**Tujuan:** Package ini (instalasi: `npm i react-native-safe-area-context`) menyediakan hooks dan components untuk dynamic insets, menggantikan deprecated SafeAreaView, memastikan layout fleksibel tanpa clipping di notched/gesture devices.
-
-**Instalasi dan Setup:** Tambah ke native code (iOS: Pod install; Android: Auto-link). Wrap app di <SafeAreaProvider>.
-
-**Hooks dan Components Kunci:**
-
-| Hook/Component | Tipe | Deskripsi | Default | Catatan & Pola Penggunaan |
-|----------------|------|-----------|---------|---------------------------|
-| `useSafeAreaInsets()` | Hook: {top, bottom, left, right, frame} | Return current insets; re-render saat change (e.g., orientation). | {0} | Pola: const insets = useSafeAreaInsets(); style: { paddingTop: insets.top, paddingBottom: insets.bottom }; integrasi Flexbox untuk margin adaptif. |
-| `<SafeAreaView>` (from package) | Component | Wrapper auto-pad children dengan insets. | - | Pola: <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>; edges prop limit (e.g., no left/right di landscape). |
-| `initialWindowMetrics` | Prop di Provider | Initial metrics untuk SSR/offline. | - | Pola: Gunakan di Expo untuk consistent boot-up; kombinasikan dengan Dimensions untuk full-screen calc. |
-| `edges` (prop SafeAreaView) | ['top'/'bottom'/'left'/'right'] | Spesifik edges untuk apply insets. | All | Pola: edges={['top']} untuk status bar only; fleksibel untuk modal yang ignore bottom inset. |
-
-**Pola Penggunaan:** Di root: <SafeAreaProvider><MyApp /></SafeAreaProvider>; di layout: const insets = useSafeAreaInsets(); <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 20) }}> (fallback untuk keyboard). Pola responsif: insets.right/left di landscape untuk side margins di foldables.
-
-**Praktik Terbaik (2025):** Selalu wrap app di Provider; gunakan hook > component untuk granular control. Test di notched devices: Inset top ~44pt iPhone 14; bottom ~34pt dengan home indicator. Integrasi Flexbox: Apply insets sebagai padding di container, biarkan children flex-grow.
-
-**Pertimbangan Platform:** iOS: Dukung Dynamic Island (insets update saat expand); Android: Gesture insets di 10+; package handle foldables dengan per-window metrics.
-
-### D. Best Practices Design Flexible & Responsive (2025)
-
-**Tujuan:** Strategi holistik untuk layout adaptif.
-
-- **Relative Units & Breakpoints:** Gunakan % di flexBasis; define breakpoints (phone: <480px, tablet: 768px+) untuk conditional Flexbox props.
-- **Gap untuk Spacing:** rowGap/columnGap di wrapped Flexbox untuk proportional gutters; scale dengan width * 0.01.
-- **Memoization & Perf:** useMemo(conditionalStyle, [width]); hindari heavy calc di render.
-- **Libraries Tambahan:** react-native-responsive-screen untuk scale (wp(10) = 10% width); kombinasikan dengan safe-area-context.
-- **Testing:** Device lab (e.g., BrowserStack) untuk sizes/orientations; accessibility: Respect fontScale di Dimensions.
-
-**Integrasi Keseluruhan:** Conditional % sizing + insets padding di Flexbox container; pola: Dynamic grid dengan safe top/bottom.
-
-## 3. Contoh Implementasi
-
-Kode siap di Expo (instal react-native-safe-area-context terlebih dahulu). Fokus adaptasi: Rotasi/unfold ubah layout.
-
-### A. Contoh Dasar: Grid Adaptif dengan Conditional % Sizing
-
-```jsx
-import React from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-
-const AdaptiveGrid = () => {
-  const { width } = useWindowDimensions();
-  const colWidth = width > 768 ? '25%' : width > 480 ? '50%' : '100%';
-
-  return (
-    <View style={styles.container}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <View key={i} style={[styles.item, { width: colWidth }]}>
-          <Text>Item {i + 1}</Text>
+    ```jsx
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: '100%' }}>
+      {items.map((item, index) => (
+        <View key={index} style={{ flex: 1, minWidth: 150, margin: 5 }}> {/* minWidth cegah terlalu kecil */}
+          <Text>{item.name}</Text>
         </View>
       ))}
     </View>
-  );
-};
+    ```
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-evenly',
-    rowGap: 10,
-    columnGap: 10,
-    padding: 10,
-  },
-  item: {
-    height: 100,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  - **Kapan Pakai**: Ideal untuk e-commerce (kartu produk) atau social feed. Test: Tambah/hapus item secara dinamis dengan `setState` untuk lihat adaptasi.
 
-export default AdaptiveGrid;
-```
+- **Kontrol Distribusi dengan `justifyContent` dan `alignContent` (Eksplorasi Mendalam)**:
+  - `justifyContent`: Mengatur spacing sepanjang main axis. Variasi lanjutan:
+    - `space-evenly`: Ruang merata termasuk tepi (lebih uniform daripada `space-between`).
+    - `space-around`: Ruang di sekitar item, tapi lebih di tengah.
+    - Gunakan dengan `alignItems: 'stretch'` untuk item yang memenuhi cross axis penuh.
+  - `alignContent`: Hanya aktif saat `flexWrap` on dan ada multi-baris. Ini seperti "justifyContent untuk baris-baris secara keseluruhan".
+    - Contoh: `alignContent: 'center'` untuk pusatkan grup baris di container tinggi.
+  - **Ilustrasi Konseptual**: Bayangkan 6 kotak di grid 2x3. `justifyContent: 'space-between'` bagi ruang horizontal per baris; `alignContent: 'flex-start'` tumpuk baris ke atas.
+  - **Pitfalls & Solusi**: Di landscape mode, distribusi bisa bergeser—gabungkan dengan `useWindowDimensions` (lihat bagian 2). Snippet lanjutan:
 
-**Penjelasan:** % width conditional; gap untuk spacing proporsional—1 kolom phone, 4 tablet.
+    ```jsx
+    <View style={{
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-evenly', // Ruang merata per baris
+      alignContent: 'center', // Pusatkan baris-baris di vertikal
+      height: 300, // Butuh height eksplisit untuk alignContent
+    }}>
+      {/* 6 child View di sini */}
+    </View>
+    ```
 
-### B. Contoh Interaktif: Layout Orientation dengan SafeArea Context
+  - **Tips Praktis**: Gunakan React DevTools untuk inspect layout tree dan lihat computed styles saat resize emulator.
 
-```jsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+- **Basis Data (Basis Item) Lanjutan**: Selalu prioritaskan `flexGrow: 1` untuk child yang ekspansif, dan `flexShrink: 1` untuk yang bisa menyusut. Ini mencegah layout "pecah" saat konten bertambah.
 
-const DynamicLayout = () => {
-  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-  const insets = useSafeAreaInsets();
+### 2. Teknik Responsif dengan API React Native
 
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }) => setDimensions(window));
-    return () => subscription?.remove();
-  }, []);
+Responsif berarti layout berubah berdasarkan konteks perangkat, bukan hard-code. API React Native memungkinkan deteksi dinamis, tapi kuncinya adalah integrasi dengan lifecycle component untuk update efisien.
 
-  const isLandscape = dimensions.width > dimensions.height;
+- **Hook `useWindowDimensions` (Breakdown Lengkap)**:
+  - Mengembalikan `{ width, height, scale, fontScale }` yang update otomatis saat orientasi berubah (portrait ke landscape).
+  - **Step-by-Step Implementasi**:
+    1. Import: `import { useWindowDimensions } from 'react-native';`.
+    2. Di functional component: `const { width, height } = useWindowDimensions();`.
+    3. Gunakan di conditional: `const isLandscape = height < width;`.
+    4. Wrap dengan `useEffect` jika perlu side-effect: `useEffect(() => { setLayout(isLandscape ? 'row' : 'column'); }, [width, height]);`.
+  - **Use Cases Lanjutan**:
+    - Grid vs List: Jika `width > 768` (tablet), render sebagai grid dengan `flexWrap`.
+    - Orientasi: Di landscape, buat sidebar + content; portrait, stack vertikal.
+  - **Pitfalls & Solusi**: Initial render bisa salah jika app load di landscape—gunakan `useState` untuk cache nilai sebelumnya. Snippet:
 
-  return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={[styles.container, { flexDirection: isLandscape ? 'row' : 'column', paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          <View style={styles.box1}><Text>Section 1</Text></View>
-          <View style={styles.box2}><Text>Section 2</Text></View>
-        </View>
-        <Text style={styles.debug}>Orientation: {isLandscape ? 'Landscape' : 'Portrait'}</Text>
-      </SafeAreaView>
-    </SafeAreaProvider>
-  );
-};
+    ```jsx
+    import { useState, useEffect } from 'react';
+    // ...
+    const [orientation, setOrientation] = useState('portrait');
+    const { width, height } = useWindowDimensions();
+    useEffect(() => {
+      setOrientation(height > width ? 'portrait' : 'landscape');
+    }, [width, height]);
+    // Gunakan orientation di style
+    ```
 
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  container: { flex: 1, justifyContent: 'space-between', gap: 10, paddingHorizontal: 20 },
-  box1: { flex: 1, backgroundColor: 'red', justifyContent: 'center', alignItems: 'center' },
-  box2: { flex: 1, backgroundColor: 'blue', justifyContent: 'center', alignItems: 'center' },
-  debug: { textAlign: 'center', padding: 10 },
-});
+- **Fungsi `PixelRatio` (Detail Teknis)**:
+  - `PixelRatio.get()`: Faktor skala (1-4x), `getFontScale()`: Skala font user (untuk accessibility).
+  - **Cara Kerja**: Hitung ukuran adaptif, misalnya border: `1 / PixelRatio.get()` untuk garis tipis konsisten di high-DPI.
+  - **Use Cases**: Font responsif: `fontSize: Math.min(18, 16 * PixelRatio.getFontScale())` agar teks tidak terlalu besar di tablet.
+  - **Pitfalls**: Di webview hybrid, nilai bisa beda—test di device real. Snippet:
 
-export default DynamicLayout;
-```
+    ```jsx
+    import { PixelRatio } from 'react-native';
+    const responsiveFont = (baseSize) => baseSize * PixelRatio.getFontScale();
+    // Di style: fontSize: responsiveFont(16)
+    ```
 
-**Penjelasan:** Listener + hook insets; direction conditional, padding adaptif—hindari clip saat rotasi.
+- **Conditional Styling dengan Helper Functions (Modular Approach)**:
+  - Buat file `utils/responsive.js` dengan fungsi seperti:
 
-### C. Contoh Lanjutan: E-Commerce Dashboard dengan Full Responsif
+    ```js
+    export const getLayoutStyle = (width) => ({
+      flexDirection: width > 500 ? 'row' : 'column',
+      alignItems: width > 500 ? 'flex-start' : 'center',
+    });
+    ```
 
-```jsx
+  - **Mengapa Modular?**: Hindari inline conditional yang bikin kode berantakan; mudah test dan reuse.
+  - **Tips Debugging**: Gunakan `console.log(dimensions)` di render untuk track perubahan, dan Flipper tool untuk profil performa.
+
+### 3. Package `react-native-safe-area-context`
+
+Package ini seperti "penjaga gerbang" untuk area layar yang aman, mencegah konten "terjebak" di zona sistem. Di perangkat modern (iPhone 14+, Samsung Galaxy S series), safe area bisa 20-50px di top/bottom, dan tanpa handling, layout jadi rusak.
+
+- **Fungsi Utama (Dengan Contoh Dampak)**:
+  - Akses insets secara akurat dan real-time, termasuk saat keyboard muncul (via listener opsional).
+  - **Mengapa Penting?**: Tanpa ini, header app bisa overlap status bar, atau footer tombol hilang di gesture navigation—penyebab 30% bug UX di app mobile.
+
+- **Props dan Komponen Utama (Detail Props)**:
+  - **SafeAreaProvider**: Root wrapper. Props lengkap:
+    - `style`: Style tambahan untuk provider (jarang dipakai).
+    - `initialMetrics`: Object `{ frame: { x, y, width, height }, insets: { top, bottom, left, right } }` untuk mock di testing (gunakan Jest dengan react-native-testing-library).
+    - `children`: App content.
+  - **SafeAreaView**: Auto-padding. Props:
+    - `style`: Override default.
+    - `edges`: `['top', 'bottom', 'left', 'right']` atau subset, e.g., `edges={['top']}` hanya safe top untuk header.
+    - `mode`: `'padding' | 'margin'` (default padding).
+  - **useSafeAreaInsets()**: Hook simple, return insets object. Bisa dipanggil di mana saja di tree.
+
+- **Methods dan Hooks (Advanced Usage)**:
+  - **useSafeAreaInsets()**: Core hook. Update otomatis, tapi untuk manual control: `const insets = useSafeAreaInsets();`.
+  - **useInitialWindowMetrics()**: Hook untuk metrics awal (frame + insets) saat app cold start—berguna untuk splash screen atau loading state.
+  - **Listener**: Tambahkan `insets.addEventListener('change', callback)` untuk custom event (jarang, tapi untuk animasi kompleks).
+  - **Nested Context**: Di modal atau drawer, wrap ulang dengan provider jika konflik.
+
+- **Masalah yang Diselesaikan (Dengan Solusi Alternatif)**:
+  - **Overflow di Notch/Home Indicator**: Solusi: Padding insets langsung ke root View. Alternatif manual: Gunakan `StatusBar.currentHeight` (Android only, kurang akurat).
+  - **Inkonsistensi Cross-Platform**: Satu API untuk semua; tanpa ini, butuh `Platform.OS` checks yang verbose.
+  - **Performa dan Battery**: Compute sekali di init ( <1ms), update lazy. Pitfall: Di app besar, hindari panggil hook di setiap render—cache dengan `useMemo`.
+  - **Edge Cases Lanjutan**:
+    - Landscape: Insets berubah (bottom lebih besar)—test dengan rotate emulator.
+    - iPad Split-View: Left/right insets aktif; gunakan `edges` untuk adaptasi.
+    - Keyboard: Integrasikan dengan `KeyboardAvoidingView` untuk bottom inset dinamis.
+    - Troubleshooting: Jika insets 0, cek `pod install` (iOS) atau rebuild (Android). Log: `console.log(insets)` untuk debug.
+
+Instalasi tetap sama, tapi tambahan: Untuk testing, mock insets di Jest dengan `jest.mock('react-native-safe-area-context')`.
+
+## Contoh Implementasi
+
+### 1: Product Grid Responsive
+
+```tsx
+
+// ============================================================================
+// KOMPONEN 1: ProductGrid.js
+// Grid responsif produk dengan flexWrap - untuk e-commerce, gallery
+// Implementasi: flexWrap, justifyContent, minWidth, useWindowDimensions
+// ============================================================================
+
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    useWindowDimensions
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const ResponsiveDashboard = () => {
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const data = Array.from({ length: 12 }, (_, i) => ({ id: i.toString(), title: `Product ${i + 1}` }));
-  const numCols = width > 800 ? 4 : width > 500 ? 2 : 1;
-  const itemWidth = (width - (numCols - 1) * 10 - insets.left - insets.right) / numCols; // Gap + insets adjust
+export default function ProductGrid() {
+    const { width } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
 
-  return (
-    <SafeAreaProvider>
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <FlatList
-          data={data}
-          numColumns={numCols}
-          renderItem={({ item }) => (
-            <View style={[styles.product, { width: itemWidth }]}>
-              <Text>{item.title}</Text>
+    // Data produk contoh - ganti dengan data dari API/props
+    const products = [
+        { id: 1, name: 'Laptop Gaming', price: 'Rp 15.000.000', image: '💻' },
+        { id: 2, name: 'Smartphone', price: 'Rp 8.000.000', image: '📱' },
+        { id: 3, name: 'Headphone', price: 'Rp 2.500.000', image: '🎧' },
+        { id: 4, name: 'Keyboard Mech', price: 'Rp 1.200.000', image: '⌨️' },
+        { id: 5, name: 'Mouse Wireless', price: 'Rp 500.000', image: '🖱️' },
+        { id: 6, name: 'Monitor 4K', price: 'Rp 6.000.000', image: '🖥️' },
+    ];
+
+    // Hitung kolom berdasarkan lebar layar
+    const isTablet = width > 600;
+    const isLandscape = width > 700;
+    const cardWidth = isLandscape ? '30%' : (isTablet ? '45%' : '100%');
+
+    return (
+        <ScrollView
+            style={[styles.container, { paddingTop: insets.top }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingHorizontal: insets.left + 16 }}
+        >
+            <Text style={styles.title}>Daftar Produk</Text>
+            <Text style={styles.subtitle}>
+                Mode: {isLandscape ? 'Landscape (3 kolom)' : (isTablet ? 'Tablet (2 kolom)' : 'Mobile (1 kolom)')}
+            </Text>
+
+            <View style={styles.gridContainer}>
+                {products.map((product) => (
+                    <TouchableOpacity
+                        key={product.id}
+                        style={[styles.productCard, { width: cardWidth }]}
+                        activeOpacity={0.7}
+                        onPress={() => console.log('Product pressed:', product.id)}
+                    >
+                        <View style={styles.productImage}>
+                            <Text style={styles.productEmoji}>{product.image}</Text>
+                        </View>
+                        <Text style={styles.productName}>{product.name}</Text>
+                        <Text style={styles.productPrice}>{product.price}</Text>
+                        <TouchableOpacity style={styles.addButton}>
+                            <Text style={styles.addButtonText}>+ Keranjang</Text>
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                ))}
             </View>
-          )}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={{ justifyContent: 'space-between', gap: 10 }}
-        />
-      </View>
-    </SafeAreaProvider>
-  );
+        </ScrollView>
+    );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 10 },
-  list: { paddingBottom: 20 },
-  product: { backgroundColor: '#f0f0f0', padding: 20, alignItems: 'center', borderRadius: 8 },
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        padding: 16,
+        paddingBottom: 8,
+        color: '#333',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#666',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    gridContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap', // KEY: Wrap ke baris baru
+        justifyContent: 'space-evenly', // Distribusi merata
+        alignContent: 'flex-start', // Mulai dari atas
+        padding: 8,
+        gap: 16,
+    },
+    productCard: {
+        backgroundColor: '#fff',
+        minWidth: 150, 
+        borderRadius: 12,
+        padding: 16,
+        elevation: 3,
+    },
+    productImage: {
+        height: 100,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    productEmoji: {
+        fontSize: 48,
+    },
+    productName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 4,
+    },
+    productPrice: {
+        fontSize: 14,
+        color: '#4CAF50',
+        fontWeight: '700',
+        marginBottom: 12,
+    },
+    addButton: {
+        backgroundColor: '#2196F3',
+        padding: 10,
+        borderRadius: 6,
+        alignItems: 'center',
+    },
+    addButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
+    },
 });
-
-export default ResponsiveDashboard;
 ```
 
-**Penjelasan:** Inset-adjusted width; numCols conditional + gap—adaptif dengan safe areas.
+### 2: Adabtive Form
 
-**Tips Debugging:** Gunakan Flipper Layout; test foldable emulator untuk unfold events.
+```tsx
+// ============================================================================
+// KOMPONEN 2: AdaptiveForm.js
+// Form yang layout-nya berubah antara portrait/landscape
+// Implementasi: useWindowDimensions, KeyboardAvoidingView, conditional flexDirection
+// ============================================================================
 
-## 4. Rangkuman
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TextInput,
+    TouchableOpacity,
+    Switch,
+    KeyboardAvoidingView,
+    Platform,
+    useWindowDimensions
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-Hari ke-8 fokus pada teknik design flexible & responsive: Conditional % sizing dan thresholds untuk adaptasi screen, orientation/foldable handling via Dimensions hooks/listeners untuk dynamic switches, serta react-native-safe-area-context untuk insets granular yang cegah clipping di edge-to-edge UI. Kunci: Relative units + conditional Flexbox props; Provider/hook integrasi untuk zero-config; test multi-scenario untuk no-shift layouts. Ini ciptakan UI yang inclusive dan performant, siap untuk advanced scaling libraries.
+export default function AdaptiveForm() {
+    const { width, height } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        newsletter: false
+    });
+
+    const isLandscape = height < width;
+    const isTablet = width > 600;
+
+    // Helper untuk update form
+    const updateField = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSubmit = () => {
+        console.log('Form submitted:', formData);
+        // Tambahkan logika submit Anda di sini
+    };
+
+    return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <ScrollView
+                style={[styles.container, { paddingTop: insets.top }]}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 20, paddingHorizontal: insets.left }}
+                keyboardShouldPersistTaps="handled"
+            >
+                <Text style={styles.title}>Form Pendaftaran</Text>
+                <Text style={styles.subtitle}>
+                    {isLandscape && isTablet ? '↔️ Layout 2 Kolom' : '↕️ Layout 1 Kolom'}
+                </Text>
+
+                <View style={[
+                    styles.formContainer,
+                    {
+                        flexDirection: isLandscape && isTablet ? 'row' : 'column', // KEY: Conditional layout
+                        flexWrap: 'wrap',
+                        justifyContent: 'space-between'
+                    }
+                ]}>
+                    {/* Input Nama */}
+                    <View style={[styles.inputGroup, { width: isLandscape && isTablet ? '48%' : '100%' }]}>
+                        <Text style={styles.label}>Nama Lengkap *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Masukkan nama"
+                            value={formData.name}
+                            onChangeText={(text) => updateField('name', text)}
+                        />
+                    </View>
+
+                    {/* Input Email */}
+                    <View style={[styles.inputGroup, { width: isLandscape && isTablet ? '48%' : '100%' }]}>
+                        <Text style={styles.label}>Email *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="email@example.com"
+                            value={formData.email}
+                            onChangeText={(text) => updateField('email', text)}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    {/* Input Phone */}
+                    <View style={[styles.inputGroup, { width: isLandscape && isTablet ? '48%' : '100%' }]}>
+                        <Text style={styles.label}>Nomor Telepon *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="08xxxxxxxxxx"
+                            value={formData.phone}
+                            onChangeText={(text) => updateField('phone', text)}
+                            keyboardType="phone-pad"
+                        />
+                    </View>
+
+                    {/* Input Address */}
+                    <View style={[styles.inputGroup, { width: isLandscape && isTablet ? '48%' : '100%' }]}>
+                        <Text style={styles.label}>Alamat</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Alamat lengkap"
+                            value={formData.address}
+                            onChangeText={(text) => updateField('address', text)}
+                            multiline
+                            numberOfLines={3}
+                        />
+                    </View>
+
+                    {/* Switch Newsletter */}
+                    <View style={[styles.inputGroup, styles.switchGroup, { width: '100%' }]}>
+                        <Text style={styles.label}>Subscribe Newsletter</Text>
+                        <Switch
+                            value={formData.newsletter}
+                            onValueChange={(value) => updateField('newsletter', value)}
+                            trackColor={{ false: '#ccc', true: '#4CAF50' }}
+                            thumbColor={formData.newsletter ? '#fff' : '#f4f3f4'}
+                        />
+                    </View>
+
+                    {/* Submit Button - Full width */}
+                    <TouchableOpacity
+                        style={[styles.submitButton, { width: '100%' }]}
+                        onPress={handleSubmit}
+                    >
+                        <Text style={styles.submitButtonText}>💾 Simpan Data</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        padding: 16,
+        paddingBottom: 8,
+        color: '#333',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#666',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        fontStyle: 'italic',
+    },
+    formContainer: {
+        padding: 16,
+    },
+    inputGroup: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+    },
+    textArea: {
+        height: 80,
+        textAlignVertical: 'top',
+    },
+    switchGroup: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    submitButton: {
+        backgroundColor: '#4CAF50',
+        padding: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+});
+```
+
+### 3: Dashboard
+
+```tsx
+// ============================================================================
+// KOMPONEN 3: DashboardCards.js
+// Dashboard dengan cards yang adaptif berdasarkan ukuran layar
+// Implementasi: flexWrap, alignContent, responsive card sizing, PixelRatio-friendly
+// ============================================================================
+
+import React from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    useWindowDimensions,
+    PixelRatio
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export default function DashboardCards() {
+    const { width } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
+    const fontScale = PixelRatio.getFontScale();
+
+    const stats = [
+        { id: 1, label: 'Total Penjualan', value: 'Rp 125M', icon: '💰', color: '#4CAF50' },
+        { id: 2, label: 'Pengguna Aktif', value: '12.5K', icon: '👥', color: '#2196F3' },
+        { id: 3, label: 'Produk Terjual', value: '8.9K', icon: '📦', color: '#FF9800' },
+        { id: 4, label: 'Rating Rata-rata', value: '4.8/5', icon: '⭐', color: '#FFC107' },
+        { id: 5, label: 'Transaksi Hari Ini', value: '234', icon: '📊', color: '#9C27B0' },
+        { id: 6, label: 'Pending Orders', value: '45', icon: '⏳', color: '#F44336' },
+    ];
+
+    // Responsive card sizing dengan multiple breakpoints
+    const isLarge = width > 768;
+    const isMedium = width > 500;
+    const cardWidth = isLarge ? '30%' : (isMedium ? '45%' : '100%');
+
+    // Responsive font sizes
+    const titleSize = Math.min(24, 22 * fontScale);
+    const subtitleSize = Math.min(14, 12 * fontScale);
+
+    return (
+        <ScrollView
+            style={[styles.container, { paddingTop: insets.top }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 350, paddingHorizontal: insets.left + 16 }}
+        >
+            <Text style={[styles.title, { fontSize: titleSize }]}>Dashboard Analytics</Text>
+            <Text style={[styles.subtitle, { fontSize: subtitleSize }]}>
+                Ukuran: {isLarge ? 'Desktop' : (isMedium ? 'Tablet' : 'Mobile')} ({width.toFixed(0)}px)
+            </Text>
+
+            {/* Stats Cards */}
+            <View style={styles.dashboardGrid}>
+                {stats.map((stat) => (
+                    <View
+                        key={stat.id}
+                        style={[
+                            styles.statCard,
+                            {
+                                width: cardWidth,
+                                borderLeftColor: stat.color,
+                                borderLeftWidth: 4,
+                            }
+                        ]}
+                    >
+                        <View style={styles.statHeader}>
+                            <Text style={styles.statIcon}>{stat.icon}</Text>
+                            <Text style={styles.statLabel}>{stat.label}</Text>
+                        </View>
+                        <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
+                    </View>
+                ))}
+            </View>
+
+            {/* Chart Section - Responsive layout */}
+            <View style={styles.chartContainer}>
+                <Text style={styles.chartTitle}>📈 Grafik Penjualan (4 Bulan Terakhir)</Text>
+                <View style={[styles.chartPlaceholder, {
+                    flexDirection: isLarge ? 'row' : 'column', // KEY: Conditional chart layout
+                    alignItems: isLarge ? 'flex-end' : 'stretch',
+                    justifyContent: 'space-around'
+                }]}>
+                    {[
+                        { label: 'Jan', height: '60%', color: '#4CAF50' },
+                        { label: 'Feb', height: '80%', color: '#2196F3' },
+                        { label: 'Mar', height: '70%', color: '#FF9800' },
+                        { label: 'Apr', height: '90%', color: '#9C27B0' },
+                    ].map((bar, index) => (
+                        <View key={index} style={styles.chartBar}>
+                            <View style={[styles.bar, { height: bar.height, backgroundColor: bar.color }]} />
+                            <Text style={styles.barLabel}>{bar.label}</Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        padding: 16,
+        paddingBottom: 8,
+        color: '#333',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#666',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    dashboardGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap', // KEY: Wrap cards
+        justifyContent: 'space-evenly',
+        alignContent: 'flex-start', // KEY: Align rows to top
+        gap: 16,
+    },
+    statCard: {
+        backgroundColor: '#fff',
+        minWidth: 150, // KEY: Prevent too narrow
+        borderRadius: 12,
+        padding: 16,
+        elevation: 3,
+    },
+    statHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    statIcon: {
+        fontSize: 24,
+        marginRight: 8,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: '#666',
+        flex: 1,
+    },
+    statValue: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    chartContainer: {
+        backgroundColor: '#fff',
+        margin: 16,
+        padding: 16,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    chartTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 16,
+        color: '#333',
+        textAlign: 'center',
+    },
+    chartPlaceholder: {
+        minHeight: 200,
+        padding: 16,
+    },
+    chartBar: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        marginHorizontal: 4,
+        minHeight: 150,
+    },
+    bar: {
+        width: 40,
+        backgroundColor: '#2196F3',
+        borderRadius: 4,
+        marginBottom: 8,
+        minHeight: 20,
+    },
+    barLabel: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '600',
+    },
+});
+
+```
+
+## Rangkuman
+
+Hari ke-8 ini telah kita dalami secara mendalam: Dari Flexbox lanjutan yang membuat layout "mengalir" seperti air dengan `flexWrap` dan distribusi pintar, hingga API responsif seperti `useWindowDimensions` yang seperti "mata" app untuk lihat perubahan layar, ditambah `PixelRatio` untuk presisi visual. Package `react-native-safe-area-context` menjadi pahlawan tak terlihat, menyelesaikan overflow cross-platform dengan insets yang akurat, hooks sederhana, dan handling edge cases yang jarang dibahas.
+
+Intinya, fleksibel + responsif = app yang "hidup" dan user-centric: Gunakan dinamis > statis, modular > inline, dan selalu test iteratif. Praktikkan dengan modifikasi contoh—misalnya, tambah animasi dengan Reanimated untuk transisi layout. Ini fondasi kuat untuk hari-hari mendatang. Selamat eksplorasi, dan keep coding! Jika butuh kode lengkap atau variasi lain, saya siap bantu.
 
 **Referensi:**
 
