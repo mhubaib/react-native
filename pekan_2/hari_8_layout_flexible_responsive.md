@@ -7,7 +7,6 @@ Setelah menyelesaikan materi pembelajaran hari ini, siswa diharapkan mampu:
 - Mengaplikasikan kombinasi properti Flexbox lanjutan (seperti `flexWrap`, `alignContent`, dan `justifyContent` dengan variasi) untuk membangun layout yang otomatis menyesuaikan dengan konten dinamis, termasuk handling overflow dan distribusi ruang yang optimal di skenario multi-item.
 - Memanfaatkan hook `useWindowDimensions` dan fungsi `PixelRatio` secara efisien untuk mendeteksi dan merespons perubahan ukuran layar/orientasi secara real-time, termasuk integrasi dengan state management untuk re-rendering yang smooth.
 - Merancang sistem conditional styling menggunakan helper functions yang modular, sehingga kode tetap clean dan scalable untuk aplikasi kompleks.
-- Mengintegrasikan `react-native-safe-area-context` dari setup hingga advanced usage, termasuk handling edge cases seperti modal atau nested navigators, serta memahami dampaknya terhadap performa aplikasi.
 - Menguji dan mengoptimalkan layout di berbagai simulator/emulator (iOS/Android, portrait/landscape) untuk memastikan konsistensi UX, dengan metrik seperti waktu render dan memory usage sebagai benchmark.
 
 Tujuan ini dirancang agar Anda tidak hanya paham "cara", tapi juga "mengapa" dan "kapan" menerapkannya, sehingga bisa adaptasi ke proyek real-world.
