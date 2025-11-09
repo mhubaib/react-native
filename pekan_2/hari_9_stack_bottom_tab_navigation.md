@@ -4,13 +4,19 @@
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
-- Memahami sistem navigasi mobile secara umum, termasuk pola standar seperti bottom tabs dan stack flows, serta mengidentifikasi jenis screen umum (e.g., home, profile, modals) untuk merancang alur aplikasi yang intuitif dan user-friendly.
-- Mengimplementasikan Stack Navigator untuk alur hierarkis, termasuk push/pop screens, modal presentations, custom headers, dan gesture-based dismissal, dengan optimasi performa seperti detachInactiveScreens.
-- Mengimplementasikan Bottom Tab Navigator untuk navigasi primer, termasuk lazy loading, custom icons/badges, tab bar styling, dan back behavior handling, sambil mengintegrasikan dengan Stack untuk nested navigation.
-- Mengintegrasikan kedua navigator (e.g., tabs dengan nested stacks) menggunakan NavigationContainer dan screenOptions untuk konsistensi tema/gestures, serta menggunakan hooks seperti useNavigation/useRoute untuk dynamic routing.
-- Menerapkan praktik terbaik seperti dynamic options berdasarkan route params.
-- Menerapkan troubleshooting umum, seperti navigation state persistence atau memory leaks di deep stacks, untuk navigasi yang robust.
-- Membangun prototipe aplikasi sederhana dengan multi-screen flow (e.g., home tab dengan detail stack), siap untuk ekspansi ke drawer atau auth flows.
+- Memahami sistem navigasi pada aplikasi mobile secara umum, termasuk pola standar seperti bottom tabs dan stack flow, serta mengenali jenis-jenis layar umum seperti Home, Profile, dan Modal, untuk merancang alur aplikasi yang intuitif dan mudah digunakan.
+
+- Menerapkan Stack Navigator untuk alur navigasi bertingkat (hierarkis), seperti push/pop screen, tampilan modal, custom header, dan gesture untuk menutup layar, dengan pengoptimalan performa seperti penggunaan detachInactiveScreens.
+
+- Menerapkan Bottom Tab Navigator untuk navigasi utama aplikasi, termasuk lazy loading, ikon dan badge kustom, pengaturan tampilan tab bar, serta pengaturan perilaku tombol back, dan mengintegrasikannya dengan Stack Navigator untuk navigasi bertingkat (nested).
+
+- Mengintegrasikan kedua jenis navigator (misalnya tab dengan stack di dalamnya) menggunakan NavigationContainer dan screenOptions agar tema dan gesture tetap konsisten, serta memanfaatkan hook seperti useNavigation dan useRoute untuk routing yang dinamis.
+
+- Menggunakan praktik terbaik seperti pengaturan opsi layar (options) secara dinamis berdasarkan route params.
+
+- Menangani masalah umum (troubleshooting) seperti penyimpanan state navigasi atau kebocoran memori pada stack yang dalam, agar navigasi tetap stabil dan andal.
+
+- Membangun prototipe aplikasi sederhana dengan alur multi-screen (misalnya tab Home dengan stack detail) yang siap dikembangkan lebih lanjut ke fitur seperti drawer atau alur autentikasi.
 
 ## 2. Materi Pembelajaran
 
@@ -71,16 +77,6 @@ Navigasi di aplikasi mobile sangat berbeda dari desktop karena layar ponsel yang
   - Bisa membingungkan pemula jika gerakan tidak konsisten.
 - **Tips**: Uji dengan pengguna untuk memastikan intuitif. Contoh: Aplikasi fitness seperti Nike Training Club, yang gabungkan tab dengan swipe untuk rutinitas latihan, dan tren baru di VR seperti navigasi suara di Apple Vision Pro.
 
-#### 6. Back Behavior (Perilaku Tombol Kembali)
-
-- **Penjelasan**: Cara pengguna kembali ke layar sebelumnya. Di Android, gunakan tombol hardware back untuk "meledakkan" (pop) tumpukan layar. Di iOS, geser dari kiri ke kanan. Tren 2025: Gerakan prediksi di Android 15+ yang menunjukkan pratinjau layar sebelumnya saat geser.
-- **Kelebihan**:
-  - Konsisten dengan ekspektasi platform (Android vs iOS).
-  - Mencegah kehilangan data saat kembali.
-- **Kekurangan**:
-  - Jika tidak dirancang baik, bisa menyebabkan kesalahan navigasi.
-- **Tips**: Selalu dukung gerakan standar dan tambahkan animasi halus untuk transisi. Contoh: Di WhatsApp, back button langsung kembali ke chat sebelumnya tanpa kehilangan posisi.
-
 Dengan mengikuti pola-pola ini, aplikasi mobile Anda akan lebih user-friendly dan sesuai standar terkini. Jika aplikasi Anda kompleks, kombinasikan beberapa pola (misalnya, bottom tabs dengan stack). Selalu uji dengan pengguna nyata untuk memastikan navigasi terasa alami!
 
 **Jenis Screen Umum/Standar di Aplikasi:** Aplikasi mobile biasanya punya 5-10 screen types, disusun hierarkis untuk onboarding → core → support. Berikut tabel standar berdasarkan pola e-commerce/social apps (sumber: UXPin & Justinmind 2025):
@@ -97,13 +93,13 @@ Dengan mengikuti pola-pola ini, aplikasi mobile Anda akan lebih user-friendly da
 | **Modals/Alerts** | Interruptive tasks; confirmation dialogs. | Error messages, share sheets. | Modal presentation; swipe dismiss. |
 | **Notifications** | In-app alerts; push handling. | List unread, mark read. | Stack dari home; tab jika persistent. |
 
-**Pola Umum Aplikasi Standar:** Onboarding → Auth → Home (tab root) dengan nested stacks untuk flows (e.g., Home tab → Product Detail stack). Tren 2025: Personalization (AI-suggested tabs) dan gesture-first (no-tap nav di foldables).
+**Pola Umum Aplikasi Standar:** Onboarding → Auth → Home (tab root) dengan nested stacks untuk flows (e.g., Home tab → Product Detail stack).
 
 ### B. Stack Navigation: Alur Hierarkis untuk Flows Linear
 
 **Tujuan:** Stack Navigator mengelola "tumpukan" screens, ideal untuk drill-down (e.g., Home → Detail → Edit), dengan transisi native dan gesture support. Di v7, fokus pada custom animations dan memory optimization.
 
-**Setup Dasar:** Instal `@react-navigation/native-stack`; wrap di `<NavigationContainer>`; gunakan `createNativeStackNavigator()` untuk native performance (vs JS-based stack).
+**Setup Dasar:** Instal `@react-navigation/native-stack`; wrap di `<NavigationContainer>`; gunakan `createNativeStackNavigator()` untuk native performance.
 
 **Props Kunci (Stack.Navigator & Screen, v7.x):**
 
