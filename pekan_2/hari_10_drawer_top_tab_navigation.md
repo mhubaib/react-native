@@ -417,13 +417,13 @@ Hari ke-10 melengkapi navigasi dengan Drawer Navigator untuk menu samping swipea
 
 ### 2: Segmentasi Konten Halaman Utama
 
-**Tugas:** Ganti konten layar `'Home'` (dari Soal 1) dengan **Material Top Tabs Navigator** untuk mengelompokkan tampilan produk. Buat 3 tab yang bisa di-swipe, yaitu: **'Populer'**, **'Terbaru'**, dan **'Diskon'**. Kustomisasi tampilan bar tab tersebut agar **garis indikator** berwarna biru primer dan **label tab** tidak menggunakan huruf kapital semua (*lowercase* atau *title case*).
+**Tugas:** Ganti konten layar `'Home'` dengan **Material Top Tabs Navigator** untuk mengelompokkan tampilan produk. Buat 3 tab yang bisa di-swipe, yaitu: **'Populer'**, **'Terbaru'**, dan **'Diskon'**. Kustomisasi tampilan bar tab tersebut agar **garis indikator** berwarna biru primer dan **label tab** tidak menggunakan huruf kapital semua (*lowercase* atau *title case*).
 
 ---
 
 ### 3: Optimasi Loading Tab yang Efisien
 
-**Tugas:** Terapkan teknik **lazy loading** pada **Material Top Tabs** (dari Soal 2) untuk memastikan konten setiap tab hanya dimuat saat diakses (fokus), namun tambahkan *preload* untuk tab yang berdekatan. Buktikan efisiensi ini dengan menambahkan *side effect* yang menampilkan pesan log ke konsol **hanya saat** tab **'Diskon'** benar-benar sedang **aktif** (di-*focus*) dan pesan pembersihan saat tab tersebut ditinggalkan.
+**Tugas:** Terapkan teknik **lazy loading** pada **Material Top Tabs** untuk memastikan konten setiap tab hanya dimuat saat diakses (fokus), namun tambahkan *preload* untuk tab yang berdekatan. Buktikan efisiensi ini dengan menambahkan *side effect* yang menampilkan pesan log ke konsol **hanya saat** tab **'Diskon'** benar-benar sedang **aktif** (di-*focus*) dan pesan pembersihan saat tab tersebut ditinggalkan.
 
 ---
 
@@ -435,7 +435,7 @@ Hari ke-10 melengkapi navigasi dengan Drawer Navigator untuk menu samping swipea
 
 ### 5: Penanganan Banyak Kategori Produk
 
-**Tugas:** Modifikasi **Material Top Tabs** (dari Soal 2) untuk mengakomodasi total **8 kategori** produk (e.g., `'Populer'`, `'Terbaru'`, `'Elektronik'`, `'Pakaian'`, `'Makanan'`, `'Otomotif'`, `'Hiburan'`, `'Perlengkapan Bayi'`). Aktifkan fungsi **scroll horizontal** pada tab bar agar semua kategori dapat diakses tanpa meluap dari layar perangkat. Pastikan **indikator** yang aktif tetap terlihat rapi di bawah label.
+**Tugas:** Modifikasi **Material Top Tabs** untuk mengakomodasi total **8 kategori** produk (e.g., `'Populer'`, `'Terbaru'`, `'Elektronik'`, `'Pakaian'`, `'Makanan'`, `'Otomotif'`, `'Hiburan'`, `'Perlengkapan Bayi'`). Aktifkan fungsi **scroll horizontal** pada tab bar agar semua kategori dapat diakses tanpa meluap dari layar perangkat. Pastikan **indikator** yang aktif tetap terlihat rapi di bawah label.
 
 ## Ketentuan
 
