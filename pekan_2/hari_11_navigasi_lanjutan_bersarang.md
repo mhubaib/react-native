@@ -1,387 +1,293 @@
-# Hari ke-11 - Navigasi Lanjutan & Arsitektur Navigasi Bersarang
+# Hari ke-11: Navigasi Lanjutan & Arsitektur Navigasi Bersarang
 
-## 1. Tujuan Pembelajaran
+## 1\. Tujuan Pembelajaran
 
-Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
+Setelah menyelesaikan sesi pembelajaran ini, peserta diharapkan mampu:
 
-- Memahami arsitektur navigasi bersarang, termasuk konsep navigator hierarchy, independent state management per level, dan event bubbling untuk actions yang gagal di child navigator, sehingga merancang flows scalable tanpa over-nesting.
-- Mengimplementasikan pola nested umum seperti tabs dalam stack (untuk modal-like detail), drawer dalam stack (untuk sidebar dengan drill-down), dan stack dalam tabs/drawer (untuk persistent nav dengan sub-flows), dengan konfigurasi seperti headerShown: false untuk clean UI.
-- Mengintegrasikan advanced features seperti param passing antar levels (e.g., via navigate with { screen, params }), dan custom actions (e.g., popToTop di parent) menggunakan hooks seperti useNavigation dan navigation.dispatch.
-- Menerapkan best practices navigation seperti minimize nesting (target 2-3 levels max), unique screen IDs untuk event targeting, dan layout props untuk platform-specific augmentation, sambil mengoptimasi performa dengan detachInactiveScreens dan freezeOnBlur.
-- Mengelola troubleshooting seperti multiple headers, navigation conflicts, atau param inaccessibility dengan techniques seperti getParent() untuk parent access dan initial: false untuk respect child initials.
+* **Memahami Konsep Dasar:** Menguasai konsep arsitektur navigasi bersarang (*nested navigation*), termasuk hierarki navigator, pengelolaan *state* yang independen per tingkat, dan mekanisme *event bubbling* untuk aksi yang gagal (misalnya, `Maps` ke rute yang tidak dikenal di *child navigator*).
+* **Menerapkan Pola Bersarang:** Mengimplementasikan pola *nested navigation* umum, seperti **Tabs di dalam Stack** (untuk detail seperti modal), **Drawer di dalam Stack** (untuk *sidebar* dengan alur *drill-down*), dan **Stack di dalam Tabs/Drawer** (untuk navigasi yang persisten dengan sub-alur).
+* **Mengintegrasikan Fitur Lanjutan:** Mengintegrasikan fitur-fitur lanjutan seperti pengiriman parameter lintas tingkat (*cross-level param passing*) dan implementasi aksi navigasi khusus (*custom actions*) menggunakan *hooks* seperti `useNavigation` dan metode `navigation.dispatch`.
+* **Mengoptimalkan dan Menerapkan *Best Practices*:** Menerapkan praktik terbaik seperti meminimalkan kedalaman bersarang (maksimal 2-3 tingkat), menggunakan *unique screen IDs* untuk penargetan peristiwa, dan mengoptimalkan performa dengan properti seperti `detachInactiveScreens` dan `freezeOnBlur`.
+* **Melakukan *Troubleshooting*:** Mengelola isu umum seperti munculnya *header* ganda (*multiple headers*), konflik navigasi, atau kesulitan mengakses parameter dengan teknik seperti `getParent()` untuk mengakses *parent navigator*.
 
-## 2. Materi Pembelajaran
+-----
 
-Materi hari ini menjelaskan navigasi lanjutan dan arsitektur bersarang secara mendalam, fokus pada bagaimana multiple navigators saling bertumpuk (nesting) untuk membentuk tree structure. Setiap navigator mempertahankan state independen (history, params, options), dan actions seperti navigate dibubbling dari child ke parent jika gagal. Per 2025, react navigation merekomendasikan "flatten" hierarchies dengan Groups (non-navigator wrappers) untuk organization tanpa overhead. Instalasi di CLI: `npm i @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs @react-navigation/drawer @react-navigation/material-top-tabs react-native-screens react-native-safe-area-context react-native-gesture-handler`; tambah `npx react-native link` jika manual, dan import gesture-handler di index.js.
+## 2\. Materi Pembelajaran
 
-### A. Konsep Arsitektur Navigasi Bersarang: Hierarchy dan State Management
+Materi hari ini membahas secara mendalam mengenai navigasi lanjutan dan arsitektur bersarang. Fokus utamanya adalah bagaimana beberapa *navigator* dapat saling bertumpuk (*nesting*) untuk membentuk struktur pohon (*tree structure*) alur aplikasi.
 
-**Tujuan:** Arsitektur bersarang membentuk tree navigators di mana child navigator dirender sebagai screen di parent, memungkinkan composability tapi berpotensi kompleks. Pahami untuk hindari pitfalls seperti duplicate UI atau stuck actions.
+Setiap *navigator* mempertahankan *state* independen (riwayat, parameter, dan opsi) di levelnya sendiri. Aksi navigasi (seperti `Maps`) akan diselesaikan di *navigator* paling dalam (*deepest navigator*); jika gagal, aksi tersebut akan **"menggelembung" (*bubble up*)** ke *navigator* induk (*parent*) berikutnya hingga berhasil atau mencapai *root navigator*.
 
-**Konsep Kunci:**
+**Pembaruan (Per 2025):** *React Navigation* sangat merekomendasikan penggunaan **Groups** (pembungkus non-navigator) untuk tujuan pengorganisasian kode tanpa menambah *overhead* *state* navigasi yang tidak perlu, sehingga membantu "meratakan" (*flatten*) hierarki.
 
-- **Navigator Hierarchy:** Parent navigator renders child sebagai <Screen name="ChildNav" component={ChildNavigator} />; child punya own stack/routes, tapi inherit theme/options dari parent jika tidak di-override.
-- **State Independence:** Setiap level punya separate navigation state (e.g., child stack punya own history, tak affect parent tabs). Actions resolve di deepest navigator dulu; jika invalid (e.g., navigate ke non-child route), bubble ke parent.
-- **UI Rendering:** Parent UI (e.g., drawer overlay) di atas child; child UI (e.g., tab bar) visible kecuali di-hide. v7.x: Layout props allow custom positioning (e.g., drawer over tabs tanpa z-index hacks).
-- **Event Bubbling:** Events seperti focus/blur bubble up; gunakan navigation.getId() untuk target specific level.
+### 2.1. Instalasi dan Setup
 
-**Pola Umum Nested Navigation:**
+Instalasi komponen yang diperlukan melalui *Command Line Interface (CLI)*:
 
-| Pola | Deskripsi | Kapan Digunakan | Contoh Setup |
-|------|-----------|-----------------|--------------|
-| **Tabs in Stack** | Tabs sebagai screen di stack; tab bar hilang saat push detail. | Modal-like detail dari tab (e.g., home feed → product stack). | <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} /> |
-| **Drawer in Stack** | Drawer slide atas stack header; hanya open dari first stack screen. | Sidebar dengan drill-down (e.g., auth stack → drawer menu). | <Stack.Screen name="Drawer" component={DrawerNavigator} />; set drawerLockMode='locked-closed' di child. |
-| **Stack in Tabs/Drawer** | Stack di tab/drawer item; tab bar/drawer tetap visible. | Persistent nav dengan sub-flows (e.g., profile tab → edit stack). | <Tab.Screen name="ProfileStack" component={StackNavigator} />; popToTopOnBlur=true untuk reset. |
-| **Deep Nesting (Stack → Tabs → Stack)** | Multiple levels; gunakan Groups untuk flatten. | Complex apps (e.g., drawer → tabs → category stack). | Minimize: Gunakan <Group> untuk bundle screens tanpa new navigator. |
-| **Hybrid (Drawer + Tabs + Stack)** | Drawer root → tabs → nested stack. | Full app (e.g., menu → home tabs → detail stack). | Root: Drawer; child: Tabs; grandchild: Stack; unique IDs: <Tab.Screen id="homeTabs" ... />. |
+```bash
+npm install @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs @react-navigation/drawer @react-navigation/material-top-tabs react-native-screens react-native-safe-area-context react-native-gesture-handler
+```
 
-**Pola Penggunaan:** Navigate ke nested: `navigation.navigate('Parent', { screen: 'Child', params: { screen: 'Grandchild', params: { id: 123 } } })`. Access parent: `const parentNav = navigation.getParent('ParentId'); parentNav.goBack()`.
+**Catatan:** Pastikan Anda juga telah mengimpor `react-native-gesture-handler` di file `index.js` atau `App.js` sebagai baris pertama, dan jika menggunakan *Native Stack*, pastikan *package* `react-native-screens` telah diaktifkan dengan menambahkan `enableScreens()` di awal aplikasi.
 
-**Praktik Terbaik:** Minimize nesting (2-3 levels max) untuk performance; gunakan Groups untuk code organization tanpa state overhead; set headerShown: false di parent screen untuk child navigation; unique screen/navigator IDs untuk targeting; initial: false di navigate untuk respect child initialRouteName. Optimasi: detachInactiveScreens=true di parents; useFocusEffect untuk child-specific effects. Test: Simulator rotasi untuk layout shifts di nested.
+### 2.2. Konsep Arsitektur Navigasi Bersarang: Hierarki dan Pengelolaan State
 
-**Troubleshooting Tips (Umum di Nested):**
+Tujuan arsitektur bersarang adalah untuk memungkinkan komposisi alur yang rumit. Pahami konsep-konsep ini untuk menghindari jebakan seperti duplikasi UI atau aksi navigasi yang terperangkap (*stuck actions*).
 
-| Issue | Penyebab | Solusi |
-|-------|----------|--------|
-| **Duplicate Headers** | Child header render di atas parent. | Set options={{ headerShown: false }} di parent screen; gunakan getHeaderTitle di child. |
-| **Navigation Stuck** | Action invalid di child, tak bubble benar. | Gunakan navigation.dispatch(CommonActions.navigate({ name: 'Target', target: 'ParentId' })); check dengan getState(). |
-| **Params Not Passed** | Nested params hilang di deep levels. | Gunakan { screen: 'Child', params: { ... }, initialParams: { ... } }; persist via route.params di child. |
-| **Back Button Conflicts** | Hardware back pop wrong level. | Set backBehavior='initialRoute' di tabs; use popToTop() di onStateChange listener. |
-| **Events Not Firing** | Listener di child tak catch parent events. | Gunakan navigation.getParent('Id').addListener('focus', ...); atau global listeners di NavigationContainer. |
-| **Perf Degradation** | Deep nesting cause re-renders. | Enable freezeOnBlur; lazy=true di tabs; memoize screens dengan React.memo. |
+#### Konsep Kunci
 
-**Pertimbangan Platform:** iOS: Nested gestures (e.g., swipe tab di drawer) auto-resolve; Android: Back button prioritaskan deepest stack. v7.x: Better foldable handling dengan per-window nesting; predictive back animasi di Android 15+.
+* **Hierarki Navigator:** Sebuah *child navigator* dirender sebagai `component` dari sebuah `<Screen>` di *parent navigator*. Contoh: `<Stack.Screen name="Tabs" component={TabNavigator} />`. *Child* memiliki tumpukan/alur sendiri, tetapi dapat mewarisi tema atau opsi dari *parent*.
+* **Independensi *State*:** Setiap level dalam hierarki memiliki *state* navigasi yang terpisah. Misalnya, riwayat tumpukan di *child stack* tidak memengaruhi *state* pada *parent tabs*.
+* **Mekanisme *Event Bubbling*:** Aksi navigasi (seperti `Maps('Detail')`) pertama kali dicoba oleh *navigator* yang sedang fokus. Jika `Detail` bukan rute yang valid di *navigator* tersebut, aksi akan **menggelembung** (*bubble up*) ke *parent navigator* berikutnya untuk mencoba resolusi, dan seterusnya.
+* **Akses Lintas Level:** Untuk memicu aksi pada *parent navigator* dari *child screen*, gunakan `navigation.getParent('ParentId')`.
 
-### B. Navigasi Lanjutan: Auth Flows, Custom Actions, dan Event Handling
+### 2.3. Pola Umum Navigasi Bersarang
 
-**Tujuan:** Lanjutan termasuk integrasi auth guards di nested routes, custom actions untuk non-standard flows, dan event handling untuk side effects.
+| Pola | Deskripsi | Skenario Penggunaan | Konfigurasi Kunci |
+| :--- | :--- | :--- | :--- |
+| **Tabs di dalam Stack** | *Tab Bar* berada di dalam *Stack*. Saat menavigasi ke halaman detail (*push*), *Tab Bar* akan hilang. | Digunakan untuk alur detail seperti modal. Contoh: Dari *Home Feed* (Tab) ke *Product Detail* (Stack). | `<Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />` |
+| **Stack di dalam Tabs/Drawer** | Setiap item *Tab* atau *Drawer* berisi *Stack Navigator* sendiri. | Digunakan untuk navigasi yang persisten dengan sub-alur mandiri. Contoh: Di dalam tab *Profile*, terdapat *Stack* untuk *Edit Profile*. | `<Tab.Screen name="ProfileStack" component={StackNavigator} />`; Gunakan `popToTopOnBlur=true` untuk reset fokus tab. |
+| **Drawer di dalam Stack** | *Drawer* berfungsi sebagai menu utama aplikasi yang diakses dari layar pertama *Stack*. | Digunakan saat autentikasi berada di *Stack* (e.g., *AuthStack*) dan setelah login, *Drawer* muncul di atas tumpukan tersebut. | `drawerLockMode='locked-closed'` di *child* untuk mengunci *Drawer* saat berada di rute non-awal *Stack*. |
+| **Hierarki Mendalam (3+ Tingkat)** | Kombinasi kompleks (e.g., Drawer → Tabs → Stack). | Aplikasi skala besar dengan banyak modul. **Sangat disarankan untuk diminimalisir.** | Gunakan `<Group>` untuk membungkus *screen* demi pengorganisasian tanpa menambah *overhead* *navigator* baru. |
 
-**Hooks dan Methods Kunci (v7.x):**
+### 2.4. Navigasi Lanjutan: Param Passing, Custom Actions, dan Optimasi
 
-| Hook/Method | Tipe | Deskripsi | Default | Catatan & Pola |
-|-------------|------|-----------|---------|---------------|
-| `useNavigationState(selector)` | Hook | Akses full state tree; selector: (state) => state. | - | Pola: const isAuthenticated = useNavigationState(s => s.routes[0].params?.token); untuk auth checks. |
-| `navigation.dispatch(action)` | Method | Kirim custom action (e.g., reset stack). | - | Pola: dispatch(StackActions.reset({ index: 0, actions: [{ name: 'Home' }] })); untuk post-login redirect. |
-| `useFocusEffect(effect)` | Hook | Run side effects on focus (child-safe). | - | Pola: useFocusEffect(useCallback(() => { fetchData(); return () => cleanup(); }, [])); di nested screens. |
-| `navigation.getParent(id?)` | Method | Akses parent navigator. | - | Pola: const parent = navigation.getParent('ParentId'); parent.goBack(); untuk cross-level actions. |
-| `navigation.getState()` | Method | Snapshot current state. | - | Pola: console.log(navigation.getState()); untuk debug hierarchy di development. |
+#### A. Pengiriman Parameter Lintas Tingkat
 
-**Pola Penggunaan:** Auth Flow: Root Stack dengan AuthStack (initial) → AppDrawer (post-login); guard: if (!token) navigation.replace('Login'). Custom Action: Extend dengan middleware untuk logging. Event Handling: Global listener di NavigationContainer: <NavigationContainer onStateChange={state => console.log(state)}>.
+Navigasi ke *screen* yang bersarang dilakukan dengan menargetkan **nama navigator** sebagai rute utama dan menyertakan objek `screen` dan `params` secara berurutan.
 
-**Praktik Terbaik (2025):** Gunakan TypeScript untuk route types (create types via infer); auth dengan replace() untuk no-back. v7.x: Built-in event resolvers untuk nested; test dengan adb/xcrun untuk CLI.
+```javascript
+navigation.navigate('ParentName', {
+  screen: 'ChildName',
+  params: {
+    screen: 'GrandchildName',
+    id: 123, // Parameter untuk Grandchild
+    initialTab: 'TabA' // Parameter untuk Child (jika Child adalah Tab Navigator)
+  }
+});
+```
 
-**Pertimbangan Platform:** iOS: Event bubbling smooth di gestures; Android: Custom actions handle hardware back. v7.x: Async state updates untuk slow renders.
+#### B. *Custom Actions* dan *State Management*
 
-**Integrasi Keseluruhan:** Bersarang + lanjutan: Drawer (root) → Tabs → Stack (detail), dengan auth guards dan custom dispatch untuk reset.
+Untuk aksi yang tidak standar, seperti *reset* tumpukan setelah *login* atau navigasi ke *parent* dari *child* yang sangat dalam, gunakan metode dan *hooks* berikut:
 
-## 3. Contoh Implementasi
+| Hook/Method | Tipe | Deskripsi | Contoh Pola Penggunaan |
+| :--- | :--- | :--- | :--- |
+| `navigation.dispatch(action)` | Method | Mengirimkan aksi navigasi kustom (*custom action*) seperti `reset` atau `jumpTo`. | `dispatch(StackActions.reset({ index: 0, routes: [{ name: 'Home' }] }));` (Reset Stack) |
+| `navigation.getParent(id?)` | Method | Mengakses objek *parent navigator* untuk memicu aksi di level atas. | `const parent = navigation.getParent(); parent.goBack();` (Aksi lintas level) |
+| `useFocusEffect(effect)` | Hook | Menjalankan *side effect* hanya saat *screen* benar-benar fokus, aman untuk *nested screen*. | Digunakan untuk *fetch data* saat *tab* diaktifkan. |
+| `useNavigationState(selector)` | Hook | Mengakses seluruh *state* navigasi aplikasi. Berguna untuk *Auth Guard*. | `const isAuthenticated = useNavigationState(s => s.routes[0].params?.token);` |
 
-### A. Contoh Dasar: Tabs Nested di Stack (Pola Umum)
+#### C. Praktik Terbaik (Best Practices) dan Optimasi
+
+1. **Minimalkan Kedalaman *Nesting***: Usahakan maksimal 2-3 tingkat. Gunakan **Groups** (`<Group>`) untuk pengorganisasian kode tanpa menambah kompleksitas *state* navigasi.
+2. ***Header* yang Bersih:** Setel `options={{ headerShown: false }}` pada `<Stack.Screen>` yang berisi *child navigator* (misalnya, *TabNavigator*) untuk menghindari *header* ganda (*duplicate headers*).
+3. **Optimasi Performa:**
+      * Gunakan `detachInactiveScreens={true}` di *parent navigator* untuk menghemat memori.
+      * Gunakan `freezeOnBlur={true}` (memerlukan `react-native-screens`) untuk mencegah *re-render* di *screen* yang tidak aktif.
+4. **Penargetan Spesifik:** Berikan `id` unik pada *navigator* atau *screen* (e.g., `<Tab.Screen id="HomeTabs" ... />`) agar dapat menargetkan aksi atau *listener* secara spesifik.
+
+-----
+
+## 3\. Contoh Implementasi
+
+### 3.1. Contoh Dasar: Tabs Nested di Stack
+
+**Pola:** *Tabs* sebagai *screen* di dalam *Stack*. Saat *push* ke **Detail**, *Tab Bar* akan hilang.
 
 ```jsx
-// App.js
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from './screens/HomeScreen';
-import DetailScreen from './screens/DetailScreen';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+// App.js - Setup
+// ... (Imports: Stack, Tab, NavigationContainer)
 
 const Tabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
-    <Tab.Screen
-      name="HomeTab"
-      component={HomeScreen}
-      options={{
-        tabBarLabel: 'Home',
-        tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
-      }}
-    />
-    <Tab.Screen
-      name="ProfileTab"
-      component={HomeScreen} // Ganti dengan Profile
-      options={{
-        tabBarLabel: 'Profile',
-        tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
-      }}
-    />
-  </Tab.Navigator>
+  <Tab.Navigator screenOptions={{ headerShown: false }}>
+    {/* Tab Screens di sini */}
+    <Tab.Screen name="HomeTab" component={HomeScreen} />
+    <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+  </Tab.Navigator>
 );
 
 const App = () => (
-  <NavigationContainer>
-    <Stack.Navigator
-      initialRouteName="Tabs"
-      screenOptions={{ headerStyle: { backgroundColor: '#007AFF' }, headerTintColor: '#fff' }}
-    >
-      <Stack.Screen
-        name="Tabs"
-        component={Tabs}
-        options={{ headerShown: false }} // Hide parent header
-      />
-      <Stack.Screen
-        name="Detail"
-        component={DetailScreen}
-        options={{ title: 'Detail' }}
-      />
-    </Stack.Navigator>
-  </NavigationContainer>
+  <NavigationContainer>
+    <Stack.Navigator>
+      <Stack.Screen
+        name="RootTabs"
+        component={Tabs}
+        options={{ headerShown: false }} // 🔑 HIDE HEADER Parent untuk Child Tabs
+      />
+      <Stack.Screen name="Detail" component={DetailScreen} />
+    </Stack.Navigator>
+  </NavigationContainer>
 );
 
-// screens/HomeScreen.js
-import React from 'react';
-import { View, Button, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-
+// screens/HomeScreen.js - Navigasi dari Tab ke Stack
+// ...
 const HomeScreen = () => {
-  const navigation = useNavigation();
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Home Tab</Text>
-      <Button title="Push Detail" onPress={() => navigation.navigate('Detail')} />
-    </View>
-  );
+  const navigation = useNavigation();
+  return (
+    // ...
+    <Button title="Push Detail" onPress={() => navigation.navigate('Detail')} />
+  ); // navigasi langsung ke rute 'Detail' di Parent Stack.
 };
-
-export default HomeScreen;
 ```
 
-**Penjelasan:** Tabs sebagai screen di stack; tab bar hilang saat push Detail; headerShown: false di Tabs untuk clean nesting.
+**Penjelasan:** *Root Stack* membungkus `Tabs`. Ketika `HomeScreen` (yang berada di dalam `Tabs`) memanggil `navigation.navigate('Detail')`, aksi ini akan **menggelembung** ke *Parent Stack Navigator* yang memiliki rute `Detail`, menyebabkan *Tab Bar* hilang karena `Detail` kini berada di atas tumpukan.
 
-### B. Contoh Interaktif: Drawer Nested di Stack dengan Param Passing
+### 3.2. Contoh Lanjutan: Deep Nesting (Drawer Root dengan Tabs + Stack)
 
-```jsx
-// App.js
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import HomeScreen from './screens/HomeScreen';
-import SettingsScreen from './screens/SettingsScreen';
-
-const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
-
-const AppDrawer = () => (
-  <Drawer.Navigator initialRouteName="Home">
-    <Drawer.Screen name="Home" component={HomeScreen} />
-    <Drawer.Screen name="Settings" component={SettingsScreen} />
-  </Drawer.Navigator>
-);
-
-const App = () => (
-  <NavigationContainer>
-    <Stack.Navigator initialRouteName="Drawer">
-      <Stack.Screen name="Drawer" component={AppDrawer} options={{ headerShown: false }} />
-      <Stack.Screen name="DeepDetail" component={SettingsScreen} />
-    </Stack.Navigator>
-  </NavigationContainer>
-);
-
-// screens/HomeScreen.js
-import React from 'react';
-import { View, Button, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-
-const HomeScreen = () => {
-  const navigation = useNavigation();
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Home in Drawer</Text>
-      <Button
-        title="Navigate to Deep Detail"
-        onPress={() =>
-          navigation.navigate('DeepDetail', {
-            screen: 'Drawer', // Target parent stack
-            params: { id: 123 },
-          })
-        }
-      />
-    </View>
-  );
-};
-
-export default HomeScreen;
-```
-
-**Penjelasan:** Drawer di stack; navigate ke deep screen dengan params; bubble action ke parent stack.
-
-### C. Contoh Lanjutan: Deep Nesting - Drawer Root dengan Tabs + Stack
+**Pola:** Drawer (Root) → Stack (Level 2) → Tabs (Level 3) → Detail (Level 2)
 
 ```jsx
-// App.js
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import HomeScreen from './screens/HomeScreen';
-import DetailScreen from './screens/DetailScreen';
-import ProfileScreen from './screens/ProfileScreen';
+// App.js - Setup
+// ... (Imports: Stack, Tab, Drawer, NavigationContainer)
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
-const Drawer = createDrawerNavigator();
-
+// Level 3: Tab Navigator
 const HomeTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
-    <Tab.Screen
-      name="HomeTab"
-      component={HomeScreen}
-      options={{ tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} /> }}
-    />
-    <Tab.Screen
-      name="ProfileTab"
-      component={ProfileScreen}
-      options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} /> }}
-    />
-  </Tab.Navigator>
+  <Tab.Navigator screenOptions={{ headerShown: false }}>
+    {/* Tabs Screen */}
+    <Tab.Screen name="HomeTab" component={HomeScreen} />
+    <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+  </Tab.Navigator>
 );
 
+// Level 2: Stack Navigator (membungkus Tabs dan Detail)
 const HomeStack = () => (
-  <Stack.Navigator>
-    <Stack.Screen name="Tabs" component={HomeTabs} options={{ headerShown: false }} />
-    <Stack.Screen name="Detail" component={DetailScreen} />
-  </Stack.Navigator>
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="Tabs" component={HomeTabs} /> // Tabs sebagai rute awal
+    <Stack.Screen name="Detail" component={DetailScreen} options={{ headerShown: true }} /> // Header terlihat
+  </Stack.Navigator>
 );
 
+// Level 1: Drawer Navigator (Root)
 const App = () => (
-  <NavigationContainer>
-    <Drawer.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-      <Drawer.Screen
-        name="Home"
-        component={HomeStack}
-        options={{ drawerIcon: ({ color }) => <Ionicons name="home" size={24} color={color} /> }}
-      />
-      <Drawer.Screen
-        name="Settings"
-        component={ProfileScreen}
-        options={{ drawerIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} /> }}
-      />
-    </Drawer.Navigator>
-  </NavigationContainer>
+  <NavigationContainer>
+    <Drawer.Navigator initialRouteName="Home">
+      <Drawer.Screen name="Home" component={HomeStack} options={{ headerShown: false }} /> // Stack di dalam Drawer
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
+    </Drawer.Navigator>
+  </NavigationContainer>
 );
 
-// screens/HomeScreen.js (dari 3.1, dengan navigate ke Detail)
-```
-
-**Penjelasan:** Drawer root → Stack (tabs + detail); deep nesting. Rebuild untuk CLI.
-
-### D. Contoh Tambahan: Custom Action dengan useNavigationState untuk Auth Guard
-
-```jsx
-// components/AuthGuard.js
-import React from 'react';
-import { View, Text } from 'react-native';
-import { useNavigationState } from '@react-navigation/native';
-
-const AuthGuard = ({ children, requiredToken }) => {
-  const isAuthenticated = useNavigationState(state => {
-    // Check root params or global state
-    const root = state.routes[0];
-    return root.params?.token === requiredToken;
-  });
-
-  if (!isAuthenticated) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Login Required</Text>
-      </View>
-    );
-  }
-
-  return children;
+// screens/HomeScreen.js - Navigasi Lintas Level (dari Tabs ke Detail di Stack)
+// ...
+const HomeScreen = () => {
+  const navigation = useNavigation();
+  return (
+    // ...
+    <Button 
+      title="Go to Detail" 
+      onPress={() => navigation.navigate('Detail')} // Akses 'Detail' di Parent Stack
+    />
+  ); 
 };
-
-// Integrasi di App.js (wrap nested screens)
-const HomeStack = () => (
-  <AuthGuard requiredToken="abc123">
-    <Stack.Navigator>
-      {/* Screens */}
-    </Stack.Navigator>
-  </AuthGuard>
-);
 ```
 
-**Penjelasan:** Hook akses state untuk guard; custom logic berdasarkan params. Extend dengan Redux untuk global auth.
+**Penjelasan:** Ini adalah pola aplikasi penuh. `HomeScreen` berada di *Tabs* (Level 3), yang dibungkus oleh *Stack* (Level 2). Ketika tombol **"Go to Detail"** ditekan, ia menavigasi ke `Detail` yang ada di *Stack Navigator* Level 2, menyebabkan *Tab Bar* menghilang tetapi *Drawer* (Level 1) tetap berfungsi sebagai *root*.
 
-**Tips Debugging:** Gunakan `console.log(navigation.getState())` untuk inspect hierarchy; test dengan adb/xcrun di CLI.
+### 3.3. Contoh Tambahan: Custom Action dan Param Passing
 
-## 4. Rangkuman
+**Skenario:** Dari *Screen* yang dalam, *reset* *Parent Stack* dan kirim *param*.
 
-Hari ke-11 mendalami navigasi lanjutan melalui arsitektur bersarang: Hierarchy concepts (independent state, bubbling), pola umum (tabs in stack, drawer in stack), props (screen/options untuk nesting), dan lanjutan seperti auth guards/useNavigationState untuk custom actions. Kunci: Minimize levels (2-3 max), headerShown: false untuk clean UI, unique IDs untuk targeting, dan Groups untuk flatten. Integrasi ini ciptakan flows scalable yang performant dan maintainable, siap untuk production dengan TypeScript typing dan foldable support di v7.x.
+```javascript
+// screens/DeepScreen.js
+import { useNavigation, StackActions } from '@react-navigation/native';
+// ...
 
-**Latihan Selanjutnya:** Bangun full app dengan drawer → tabs → stack, tambah auth guard di nested route.
+const DeepScreen = () => {
+  const navigation = useNavigation();
+  
+  const resetToHomeAndPassParam = () => {
+    // 1. Dapatkan Parent Stack (misalnya ID-nya adalah 'HomeStack')
+    const parentStack = navigation.getParent('HomeStack'); // Gunakan ID yang ditetapkan di Drawer
+    
+    // 2. Jika Parent Stack ada, reset Stack-nya
+    if (parentStack) {
+      parentStack.dispatch(
+        StackActions.reset({
+          index: 0, // Kembali ke awal Stack (yaitu Tabs)
+          routes: [{ 
+            name: 'Tabs', // Nama rute awal Stack
+            params: { welcomeMessage: 'Reset Berhasil!' } // Opsional: kirim param ke Tabs
+          }],
+        })
+      );
+    }
+  };
 
-**Referensi:**
+  return (
+    // ...
+    <Button title="Reset Stack & Back to Tabs" onPress={resetToHomeAndPassParam} />
+  );
+};
+```
 
-- [Nesting navigators | React Navigation](https://reactnavigation.org/docs/nesting-navigators)
-- [Mastering React Native Navigation for Beginners (2025 Edition)](https://medium.com/react-native-journal/mastering-react-native-navigation-for-beginners-2025-edition-44b42cced32d)
-- [Your Complete Guide to React Native Navigation in 2025](https://www.peanutsquare.com/your-complete-guide-to-react-native-navigation-in-2025/)
-- [Best Practices for Creating Navigation in a React Native Project](https://medium.com/@tusharkumar27864/react-native-navigation-simplified-best-practices-and-tips-748df1217a70)
-- [React Navigation Patterns: Build Intuitive Mobile Apps](https://softwarehouse.au/blog/navigation-patterns-with-react-navigation-building-intuitive-mobile-flows/)
+-----
 
-Tentu, saya akan membuat 5 contoh soal praktik lanjutan yang sesuai dengan materi **Navigasi Bersarang** dan **Arsitektur Navigasi Lanjutan** (Hari ke-11), melanjutkan skenario proyek Mini E-Commerce dan hasil dari soal-soal sebelumnya.
+## 4\. Rangkuman
 
-Soal-soal ini diformulasikan sebagai **perintah lugas** tanpa instruksi teknis.
+Hari ke-11 telah menguraikan navigasi lanjutan melalui arsitektur bersarang: konsep Hierarki (independensi *state*, *bubbling*), pola umum (Tabs di Stack, Stack di Tabs), properti esensial (`screen/options` untuk *nesting*), dan teknik lanjutan seperti *auth guards* dan `useNavigationState` untuk aksi kustom. Kunci utama dalam membangun arsitektur yang *scalable* dan *performant* adalah: **meminimalkan kedalaman (*nesting* 2-3 tingkat maks.)**, menggunakan **`headerShown: false`** untuk UI yang bersih, dan memanfaatkan **Groups** untuk organisasi kode yang efisien.
 
----
+-----
 
-## 5. Evaluasi Harian: Soal Praktik
+## 5\. Evaluasi Harian: Soal Praktik
 
-`Lanjutan project Mini E-Commerce`
+Berikut adalah soal praktik lanjutan untuk proyek **Mini E-Commerce**, berfokus pada navigasi bersarang dan aksi lintas level.
 
 ### Soal Praktik 1: Perancangan Arsitektur Hierarki Tiga Tingkat
 
-**Tugas:** Rancang ulang seluruh arsitektur navigasi aplikasi menjadi **hierarki tiga tingkat** (Drawer → Stack → Tabs) untuk alur yang kompleks:
+**Tugas:** Rancang ulang arsitektur navigasi aplikasi menjadi **hierarki tiga tingkat** (Drawer → Stack → Tabs) dengan ketentuan:
 
-1. **Tingkat 1 (Root):** Gunakan **Drawer Navigator** sebagai navigasi utama (Root).
-2. **Tingkat 2 (Primary):** Buat **Stack Navigator** sebagai layar utama di dalam salah satu item Drawer. *Stack* ini harus berisi *Tab Navigator* sebagai rute awalnya.
-3. **Tingkat 3 (Secondary):** Gunakan **Material Top Tabs Navigator** (dari Soal Praktik sebelumnya) sebagai rute awal *Stack* Tingkat 2.
+1. **Level 1 (Root):** **Drawer Navigator** (misalnya `RootDrawer`).
+2. **Level 2 (Primary):** **Stack Navigator** (misalnya `HomeStack`) yang menjadi rute utama di dalam `RootDrawer`.
+3. **Level 3 (Secondary):** **Material Top Tabs Navigator** yang menjadi **rute awal** (`initialRouteName`) dari `HomeStack`.
 
-Pastikan *header* dari *Stack* Tingkat 2 **tetap terlihat** di atas *Top Tabs* untuk menampilkan judul dan tombol menu, tetapi *header* dari *Top Tabs* itu sendiri **dihilangkan**.
+**Persyaratan UI:** Pastikan *header* dari **`HomeStack` (Level 2)** **tetap terlihat** di atas *Top Tabs* untuk menampilkan judul dan tombol menu, sementara *header* dari **Material Top Tabs (Level 3)** itu sendiri **dihilangkan** melalui opsi yang tepat.
 
----
+-----
 
-### Soal Praktik 2: Navigasi Lintas Tingkat untuk Halaman Detail
+### Soal Praktik 2: Navigasi Lintas Tingkat (Tabs → Stack Detail)
 
-**Tugas:** Di dalam **Top Tabs** (Tingkat 3), tambahkan fungsionalitas tombol yang memungkinkan navigasi dari tab produk (**Tingkat 3**) langsung ke halaman **Detail Produk** yang berada di **Stack Navigator** (Tingkat 2). Saat navigasi terjadi, pastikan **Top Tabs Bar menghilang**, tetapi **Drawer** (Tingkat 1) tetap dapat diakses atau dibuka. Kirim **ID Produk** sebagai *parameter* saat menavigasi ke halaman **Detail Produk**.
+**Tugas:** Terapkan fungsionalitas di **Top Tabs (Level 3)** yang memungkinkan navigasi dari tab produk langsung ke halaman **Detail Produk** yang berada di **`HomeStack` (Level 2)**.
 
----
+**Persyaratan Aksi:**
+
+1. Aksi navigasi harus membuat **Top Tabs Bar menghilang**.
+2. **Drawer (Level 1)** harus tetap dapat dibuka (diakses).
+3. Kirim `ID Produk` sebagai **parameter** saat menavigasi ke halaman **Detail Produk**.
+
+-----
 
 ### Soal Praktik 3: Pengembalian ke Root Navigator dan Reset Stack
 
-**Tugas:** Tambahkan fungsionalitas *reset stack* di halaman **Detail Produk** (Tingkat 2). Buat sebuah tombol yang, ketika ditekan:
+**Tugas:** Tambahkan fungsionalitas *reset stack* di halaman **Detail Produk** (Level 2). Buat sebuah tombol yang, ketika ditekan, memicu dua aksi kustom secara berurutan:
 
-1. Melakukan **Reset** seluruh Stack Navigator (Tingkat 2) ke rute awalnya, yaitu **Top Tabs**.
-2. Secara programatik **menutup** Drawer Navigator (Tingkat 1).
+1. Melakukan **`Reset`** seluruh **`HomeStack` (Level 2)** ke rute awalnya, yaitu **Top Tabs**.
+2. Secara programatik **menutup** **Drawer Navigator (Level 1)**.
 
-Ini menyimulasikan pengalaman "Selesai Berbelanja" atau "Kembali ke Beranda Utama" yang bersih tanpa riwayat detail.
+-----
 
----
+### Soal Praktik 4: Kontrol Aksi ke Parent Navigator Secara Eksplisit
 
-### Soal Praktik 4: Kontrol Aksi ke Parent Navigator
+**Tugas:** Di halaman **Detail Produk** (Level 2), buat tombol aksi baru berlabel **"Kembali ke Drawer Home"**. Tombol ini harus secara eksplisit memicu aksi `goBack()` pada **Parent Navigator** terdekat (yaitu **Drawer Navigator Level 1**) menggunakan metode `navigation.getParent()`.
 
-**Tugas:** Di halaman Detail Produk (Tingkat 2), buat tombol aksi baru berlabel **"Kembali ke Drawer Home"**. Tombol ini harus secara eksplisit memicu aksi `goBack()` pada **Parent Navigator** (yaitu Drawer Navigator Tingkat 1) untuk kembali ke item navigasi sebelumnya di Drawer, tanpa mempengaruhi Stack di dalamnya.
+**Tujuan:** Memastikan navigasi kembali ke item Drawer sebelumnya (bukan *pop* di Stack).
 
----
+-----
 
 ### Soal Praktik 5: Implementasi Auth Guard di Level Nested
 
-**Tugas:** Terapkan **Auth Guard** di salah satu *Screen* **Top Tabs** (Tingkat 3), misalnya di tab **'Profile'** atau **'Settings'**. Gunakan *hook* **`useNavigationState`** atau mekanisme *state* navigasi lainnya untuk memeriksa **status otentikasi** (simulasikan token otentikasi di parameter root navigasi). Jika pengguna **belum terotentikasi**, konten tab **tidak boleh dimuat**, dan sebaliknya harus menampilkan komponen placeholder sederhana bertuliskan "Harap Login untuk mengakses".
+**Tugas:** Terapkan **Auth Guard** pada salah satu *Screen* di **Top Tabs (Level 3)**, misalnya di tab **'Profile'**.
+
+**Persyaratan Logika:**
+
+1. Gunakan *hook* **`useNavigationState`** atau mekanisme *state* navigasi lainnya untuk memeriksa **status otentikasi** (simulasikan *token* otentikasi yang disimpan di parameter *root navigasi*).
+2. Jika pengguna **belum terotentikasi**, konten tab **'Profile'** harus menampilkan komponen *placeholder* sederhana bertuliskan **"Harap Login untuk mengakses"**, dan konten utama tab **tidak boleh dimuat**.
+
+-----
 
 ## Ketentuan
 
-```md
-- Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
-- Soal wajib dikerjakan mandiri sesuai instruksi
-```  
+* Jawaban wajib dikumpulkan sebelum jam yang telah ditetapkan
+* Soal wajib dikerjakan mandiri sesuai instruksi
 
----
-
-**Mobile App Development With React Native*
+***Mobile App Development With React Native***
