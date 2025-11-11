@@ -237,38 +237,39 @@ Berikut adalah soal praktik lanjutan untuk proyek **Mini E-Commerce**, berfokus 
 
 **Tugas:** Rancang ulang arsitektur navigasi aplikasi menjadi **hierarki tiga tingkat** (Drawer → Stack → Tabs) dengan ketentuan:
 
-1. **Level 1 (Root):** **Drawer Navigator** (misalnya `RootDrawer`).
-2. **Level 2 (Primary):** **Stack Navigator** (misalnya `HomeStack`) yang menjadi rute utama di dalam `RootDrawer`.
-3. **Level 3 (Secondary):** **Material Top Tabs Navigator** yang menjadi **rute awal** (`initialRouteName`) dari `HomeStack`.
+1. **Level 1 :** **Drawer Navigator**.
+2. **Level 2 :** **Bottom tab Navigator** yang menjadi rute utama di dalam `RootDrawer`.
+3. **Level 3 :** **Stack Navigator**
+4. **Level 4 :** **Material Top Tabs** yang menjadi screen utama di `Stack Navigator` `level 3`
 
-**Persyaratan UI:** Pastikan *header* dari **`HomeStack` (Level 2)** **tetap terlihat** di atas *Top Tabs* untuk menampilkan judul dan tombol menu, sementara *header* dari **Material Top Tabs (Level 3)** itu sendiri **dihilangkan** melalui opsi yang tepat.
+**Persyaratan UI:** Pastikan *header* dari **`Stack Navigator`** **tetap terlihat** di atas *Top Tabs* untuk menampilkan judul dan tombol menu.
 
 -----
 
 ### Soal Praktik 2: Navigasi Lintas Tingkat (Tabs → Stack Detail)
 
-**Tugas:** Terapkan fungsionalitas di **Top Tabs (Level 3)** yang memungkinkan navigasi dari tab produk langsung ke halaman **Detail Produk** yang berada di **`HomeStack` (Level 2)**.
+**Tugas:** Terapkan fungsionalitas di **Top Tabs** yang memungkinkan navigasi dari tab produk langsung ke halaman **Detail Produk** yang berada di **`Stack Navigator`**.
 
 **Persyaratan Aksi:**
 
 1. Aksi navigasi harus membuat **Top Tabs Bar menghilang**.
-2. **Drawer (Level 1)** harus tetap dapat dibuka (diakses).
+2. **Drawer** harus tetap dapat dibuka (diakses).
 3. Kirim `ID Produk` sebagai **parameter** saat menavigasi ke halaman **Detail Produk**.
 
 -----
 
 ### Soal Praktik 3: Pengembalian ke Root Navigator dan Reset Stack
 
-**Tugas:** Tambahkan fungsionalitas *reset stack* di halaman **Detail Produk** (Level 2). Buat sebuah tombol yang, ketika ditekan, memicu dua aksi kustom secara berurutan:
+**Tugas:** Tambahkan fungsionalitas *reset stack* di halaman **Detail Produk**. Buat sebuah tombol yang, ketika ditekan, memicu dua aksi kustom secara berurutan:
 
-1. Melakukan **`Reset`** seluruh **`HomeStack` (Level 2)** ke rute awalnya, yaitu **Top Tabs**.
-2. Secara programatik **menutup** **Drawer Navigator (Level 1)**.
+1. Melakukan **`Reset`** seluruh **`Stack Navigator`** ke rute awalnya, yaitu **Top Tabs**.
+2. Secara programatik **menutup** **Drawer Navigator**.
 
 -----
 
 ### Soal Praktik 4: Kontrol Aksi ke Parent Navigator Secara Eksplisit
 
-**Tugas:** Di halaman **Detail Produk** (Level 2), buat tombol aksi baru berlabel **"Kembali ke Drawer Home"**. Tombol ini harus secara eksplisit memicu aksi `goBack()` pada **Parent Navigator** terdekat (yaitu **Drawer Navigator Level 1**) menggunakan metode `navigation.getParent()`.
+**Tugas:** Di halaman **Detail Produk**, buat tombol aksi baru berlabel **"Kembali ke Drawer Home"**. Tombol ini harus secara eksplisit memicu aksi `goBack()` pada **Parent Navigator** terdekat (yaitu **Drawer Navigator**) menggunakan metode `navigation.getParent()`.
 
 **Tujuan:** Memastikan navigasi kembali ke item Drawer sebelumnya (bukan *pop* di Stack).
 
@@ -276,7 +277,7 @@ Berikut adalah soal praktik lanjutan untuk proyek **Mini E-Commerce**, berfokus 
 
 ### Soal Praktik 5: Implementasi Auth Guard di Level Nested
 
-**Tugas:** Terapkan **Auth Guard** pada salah satu *Screen* di **Top Tabs (Level 3)**, misalnya di tab **'Profile'**.
+**Tugas:** Terapkan **Auth Guard** pada salah satu *Screen* di **Bottom tab Navigator**, misalnya di screen **'Profile'**.
 
 **Persyaratan Logika:**
 
