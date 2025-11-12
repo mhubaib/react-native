@@ -4,15 +4,12 @@
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
-- Memahami Fetch API sebagai dasar networking built-in React Native, serta mengimplementasikannya untuk HTTP requests (GET/POST/PUT/DELETE) dengan pengelolaan yang baik seperti headers, timeouts, dan AbortController untuk performa tinggi dan pembatalan request.
+- Memahami Fetch API sebagai dasar networking di React Native, serta mengimplementasikannya untuk HTTP requests dengan pengelolaan yang baik seperti headers, timeouts, dan AbortController untuk performa tinggi dan pembatalan request.
 - Mengimplementasikan Axios sebagai alternatif library untuk requests yang lebih fleksibel, termasuk konfigurasi instance, interceptors untuk headers dinamis, dan pengaturan timeouts global untuk konsistensi di seluruh aplikasi.
 - Mengelola pengelolaan status koneksi internet menggunakan NetInfo library untuk deteksi online/offline real-time, listener changes, dan conditional rendering (e.g., show loading/offline states), sambil mengintegrasikannya dengan requests untuk adaptasi jaringan.
-- Menerapkan praktik terbaik seperti HTTPS enforcement, request cancellation untuk unmount, dan polling dengan intervals optimal, untuk aplikasi yang responsif di berbagai kondisi jaringan (WiFi/3G/5G).
+- Menerapkan praktik terbaik seperti HTTPS enforcement, request cancellation untuk unmount, dan polling dengan intervals optimal, untuk aplikasi yang responsif di berbagai kondisi jaringan.
 - Mengintegrasikan networking dengan useEffect/useState untuk lifecycle management, memastikan requests hanya berjalan saat diperlukan dan dibersihkan dengan benar.
-- Menerapkan troubleshooting umum seperti request hanging atau inconsistent NetInfo di emulators, untuk networking yang scalable di RN 0.75+.
-- Membangun prototipe fitur networking sederhana dengan koneksi check dan requests optimal, siap untuk integrasi dengan navigasi atau state management lanjutan.
-
-Tujuan ini selaras dengan update RN 0.75+ (2025): Emphasis pada Fetch dengan AbortController untuk cancel requests, dan NetInfo v10+ dengan better isInternetReachable untuk accurate connectivity di 5G/edge networks.
+- Menerapkan troubleshooting umum seperti request hanging atau inconsistent NetInfo di emulators, untuk networking yang scalable.
 
 ## 2. Materi Pembelajaran
 
@@ -321,7 +318,7 @@ Hari ke-13 membangun pengelolaan networking yang baik melalui Fetch/Axios untuk 
 
 ### a. Pengelolaan *Lifecycle* dengan Fetch API dan Pembatalan (*Cancellation*)
 
-**Tugas:** Buat komponen *Screen* **'Product List'** yang memuat data daftar produk (GET request) menggunakan **Fetch API** dari *endpoint* simulasi. Pastikan *request* tersebut **selalu dibatalkan** jika pengguna **meninggalkan layar** (komponen di-*unmount*) atau jika *request* memakan waktu lebih dari **7 detik** (*timeout*). Implementasikan pembatalan ini menggunakan **`AbortController`** dan **`useEffect`** *cleanup function*.
+**Tugas:** Buat komponen *Screen* **'Product List'** yang memuat data daftar produk (GET request) menggunakan **API** yang telah diberikan. Pastikan *request* tersebut **selalu dibatalkan** jika pengguna **meninggalkan layar** (komponen di-*unmount*) atau jika *request* memakan waktu lebih dari **7 detik** (*timeout*). Implementasikan pembatalan ini menggunakan **`AbortController`** dan **`useEffect`** *cleanup function*.
 
 ---
 
@@ -339,7 +336,7 @@ Hari ke-13 membangun pengelolaan networking yang baik melalui Fetch/Axios untuk 
 **Tugas:** Gunakan **Axios** untuk mengelola semua *request* (simulasi login, detail, dll.) di aplikasi E-Commerce Anda. Buat **Axios *instance*** terpisah (`apiClient`) yang memiliki konfigurasi:
 
 1. **`baseURL`** yang mengarah ke API simulasi Anda.
-2. **`timeout`** global 10 detik.
+2. **`timeout`**.
 3. Gunakan **Interceptor Request** untuk secara otomatis menambahkan *custom header* **`X-Client-Platform: React-Native`** ke setiap *request* yang dikirim, tanpa harus menuliskannya di setiap panggilan API.
 
 ---
