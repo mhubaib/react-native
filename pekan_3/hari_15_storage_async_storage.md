@@ -1,110 +1,92 @@
-# Hari ke-15 - Storage: AsyncStorage
+# Hari ke-15: Penyimpanan Data Lokal (**AsyncStorage**)
 
 ## 1. Tujuan Pembelajaran
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
-- Memahami AsyncStorage sebagai key-value store asynchronous yang unencrypted dan thread-safe, serta mengimplementasikannya untuk operasi dasar seperti setItem, getItem, removeItem, dan multi-methods untuk batch operations, memastikan persistensi data antar app restarts.
-- Mengimplementasikan pola penggunaan AsyncStorage untuk menyimpan data kecil seperti user settings, auth tokens, atau temporary states, dengan pengelolaan concurrency via async/await dan error handling dari Hari ke-14 untuk robustness.
-- Mengelola teknik caching data lokal dengan AsyncStorage di berbagai kondisi seperti offline access (cache-first), TTL (time-to-live) untuk freshness, dan size limits (max 6MB), sambil memastikan cleanup rutin untuk mencegah storage bloat.
-- Menerapkan praktik terbaik seperti namespacing keys (e.g., '@app:userPrefs'), serialization (JSON.stringify/parse), dan integration dengan networking (cache API responses), untuk aplikasi yang efisien dan offline-capable.
-- Menganalisis dan menyelesaikan studi kasus caching seperti persistent user preferences, API response caching untuk reduced latency, dan handling quota exceeded errors, dengan langkah-langkah debugging menggunakan console dan AsyncStorage.clear() untuk testing.
-- Menerapkan troubleshooting umum seperti async race conditions atau data corruption dari improper serialization, untuk storage yang scalable di RN 0.75+.
-- Membangun prototipe dengan AsyncStorage lengkap, seperti caching mechanism untuk data fetch dari Hari ke-13, siap untuk integrasi dengan state management seperti Context atau Redux.
+* **Memahami AsyncStorage:** Tahu bahwa AsyncStorage adalah tempat penyimpanan data sederhana (seperti kotak kunci-nilai) yang **lambat** (asynchronous), **tidak dienkripsi**, dan aman digunakan bersamaan dengan bagian lain aplikasi (thread-safe). Data yang disimpan akan **tetap ada** meski aplikasi dimatikan/dihidupkan lagi.
+* **Menggunakan Perintah Dasar:** Mampu menggunakan fungsi utama seperti **`setItem`** (simpan), **`getItem`** (ambil), **`removeItem`** (hapus), dan fungsi `multi-` (untuk banyak data sekaligus).
+* **Menerapkan Pola Penyimpanan:** Bisa menyimpan data kecil, seperti **pengaturan pengguna**, **token masuk**, atau status sementara, sambil mengelola jika terjadi kesalahan (error handling).
+* **Mengatur Caching (Penyimpanan Sementara):** Menggunakan AsyncStorage untuk menyimpan data API sementara (caching) agar bisa diakses **saat offline** (cache-first), menentukan **batas waktu data** (TTL/Time-to-Live) agar data tetap baru, dan menjaga agar total data **tidak melebihi 6MB**.
+* **Menerapkan Praktik Terbaik:** Menamai kunci penyimpanan dengan teratur (contoh: `'@app:settings'`), mengubah objek menjadi teks (JSON.stringify/parse) sebelum menyimpan, dan menggabungkannya dengan proses ambil data dari internet (networking).
+* **Mengatasi Masalah:** Mampu menganalisis dan memperbaiki masalah umum seperti data rusak atau kelebihan kuota penyimpanan.
+* **Membangun Prototipe:** Membuat fitur penyimpanan yang siap digabungkan dengan manajemen state aplikasi (seperti Context/Redux).
 
-Tujuan ini selaras dengan update RN 0.75+ (2025): AsyncStorage tetap sebagai community-maintained (non-core sejak 0.60), dengan enhanced async patterns untuk better concurrency di multi-threaded environments seperti JSI.
+**Catatan:** AsyncStorage tetap penting dan kini berjalan lebih baik di lingkungan multi-thread (seperti RN 0.75+).
+
+---
 
 ## 2. Materi Pembelajaran
 
-Bagian ini menjelaskan AsyncStorage secara mendalam, termasuk API dasar, pola caching, dan studi kasus dengan langkah penyelesaian. AsyncStorage adalah wrapper asynchronous untuk native key-value stores (NSUserDefaults iOS, SharedPreferences Android), unencrypted dan synchronous-free untuk UI thread safety. Per 2025, best practices menekankan TTL caching untuk data freshness dan namespacing untuk collision avoidance. Integrasikan dengan useEffect untuk lifecycle loads/saves, dan error handling dari Hari ke-14 untuk robustness.
+**AsyncStorage** adalah alat sederhana untuk menyimpan data *key-value* di ponsel (NSUserDefaults di iOS, SharedPreferences di Android), tetapi **tidak ada enkripsi** secara *default*.
 
-### A. API Dasar AsyncStorage: Operasi Kunci-Value Asynchronous
+### A. Perintah Dasar AsyncStorage (Key-Value)
 
-**Tujuan:** AsyncStorage menyediakan API simple untuk persistensi, dengan dukungan multi-key operations untuk efficiency, memastikan data bertahan antar app kills/restarts.
+AsyncStorage menyediakan perintah sederhana untuk menyimpan data yang sifatnya **Asynchronous** (prosesnya tidak instan, harus ditunggu).
 
-**Methods Kunci (v1.23+, 2025):**
+| Perintah | Fungsi | Catatan Penting |
+| :--- | :--- | :--- |
+| `setItem(key, value)` | **Simpan** satu data. | *Semua* data harus berupa teks. Ubah objek jadi teks pakai **`JSON.stringify`**. Batasi ukuran $<1\text{MB}$ per item. |
+| `getItem(key)` | **Ambil** satu data. | Gunakan **`await`** untuk menunggu. Ubah teks jadi objek lagi pakai **`JSON.parse`**. |
+| `removeItem(key)` | **Hapus** satu data. | Contoh untuk menghapus token saat *logout*. |
+| `multiSet(pasangan key-value)` | **Simpan** banyak data sekaligus. | Lebih cepat daripada `setItem` satu per satu. |
+| `multiGet(keys)` | **Ambil** banyak data sekaligus. | Lebih cepat untuk memuat status awal aplikasi (misal: pengaturan + token). |
+| `clear()` | **Hapus SEMUA** data AsyncStorage. | Hanya untuk *logout* atau *debugging* ekstrem. |
 
-| Method | Tipe | Deskripsi | Return | Catatan Platform & Best Practices |
-|--------|------|-----------|--------|----------------------------------|
-| `setItem(key, value)` | async (string, string) => Promise<void> | Simpan string value untuk key. | Promise | JSON.stringify non-strings; key: '@app:username'; batasi value <1MB per item. |
-| `getItem(key)` | async (string) => Promise<string|null> | Ambil value; null jika tidak ada. | Promise | await getItem(key); parse dengan JSON.parse untuk objects; handle null dengan defaults. |
-| `removeItem(key)` | async (string) => Promise<void> | Hapus key. | Promise | Gunakan untuk logout (remove '@app:token'); batch dengan multiRemove untuk multiple. |
-| `mergeItem(key, value)` | async (string, string) => Promise<void> | Merge JSON objects (shallow). | Promise | { ...existing, ...new }; ideal untuk incremental updates seperti settings. |
-| `multiGet(keys)` | async (string[]) => Promise<[string, string|null][]> | Batch get multiple keys. | Promise | [[key1, value1], [key2, null]]; gunakan untuk load app state (e.g., user + prefs). |
-| `multiSet(keyValuePairs)` | async ([string, string][]) => Promise<void> | Batch set multiple. | Promise | [['key1', 'val1'], ['key2', 'val2']]; efisien untuk initial setup. |
-| `multiRemove(keys)` | async (string[]) => Promise<void> | Batch delete. | Promise | Untuk cleanup (e.g., multiRemove(['@app:token', '@app:prefs'])); async await untuk sequential. |
-| `multiMerge(keyValuePairs)` | async ([string, string][]) => Promise<void> | Batch merge. | Promise | Incremental batch updates; gunakan untuk sync partial data. |
-| `getAllKeys()` | async () => Promise<string[]> | List semua keys. | Promise | Untuk debug/migration; filter dengan '@app:' prefix; batasi use untuk privasi. |
-| `clear()` | async () => Promise<void> | Hapus semua data. | Promise | Gunakan di logout/debug; confirm dengan Alert untuk production. |
-| `flushGetRequests()` | async () => Promise<void> | Flush pending ops (legacy). | Promise | Deprecated; gunakan di old codebases; RN 0.75+: Auto-flush. |
+**Pola Sederhana:**
 
-**Pola Penggunaan:** Basic: `await AsyncStorage.setItem('username', JSON.stringify({ name: 'John' })); const user = JSON.parse(await AsyncStorage.getItem('username')) || { name: 'Guest' };`. Pola dengan useEffect: useEffect(() => { loadPrefs(); }, []); untuk app startup. Multi: `const [[key1, val1]] = await AsyncStorage.multiGet(['key1']);`.
+1. Simpan: `await AsyncStorage.setItem('key', JSON.stringify({obj}));`
+2. Ambil: `const obj = JSON.parse(await AsyncStorage.getItem('key')) || nilai_default;`
 
-**Praktik Terbaik (2025):** Namespacing: Prefix keys ('@app:'); serialize objects dengan JSON (handle circular refs dengan custom replacer); batasi size (6MB total); async/await untuk readability; error handling (try-catch) untuk quota exceeded. RN 0.75+: Better thread safety untuk JSI bridge.
+**Praktik Terbaik (Penting!):**
 
-**Pertimbangan Platform:** iOS: NSUserDefaults (fast, small); Android: SharedPreferences (encrypted option via KeyStore, tapi AsyncStorage unencrypted by default).
+* **Namespacing:** Beri awalan pada kunci (contoh: `'@app:username'`) untuk menghindari bentrok nama.
+* **Serialization:** Selalu ubah Objek menjadi Teks (JSON.stringify/parse).
+* **Error Handling:** Gunakan **`try-catch`** untuk mengantisipasi jika penyimpanan penuh atau data rusak.
 
-### B. Teknik Caching Data Lokal dengan AsyncStorage: Pola dan Strategi
+---
 
-**Tujuan:** Caching dengan AsyncStorage mengurangi API calls (dari Hari ke-13) dan mendukung offline UX, dengan teknik seperti cache-first, TTL, dan conditional invalidation untuk freshness dan efficiency.
+### B. Teknik Caching Data Lokal (Penyimpanan Sementara)
 
-**Teknik Kunci:**
+Caching adalah menyimpan data dari API untuk mengurangi panggilan ke server dan membuat aplikasi bisa dipakai **saat offline**.
 
-| Teknik | Deskripsi | Kapan Digunakan | Contoh Pola |
-|--------|-----------|-----------------|-------------|
-| **Cache-First (Offline-Capable)** | Check cache sebelum API; fallback jika stale atau missing. | Data semi-static seperti user profile; kurangi latency. | if (cached) return cached; else fetch + set cache. |
-| **TTL (Time-to-Live)** | Timestamp + expiry check; evict setelah TTL. | Data volatile seperti news feeds; TTL 5-30min. | { data, timestamp }; if (Date.now() - timestamp < TTL) use cache. |
-| **Write-Through** | Cache + API update simultan; consistency tinggi. | Critical data seperti cart items; sync on write. | setCache(data); api.post(data); on success update cache. |
-| **Conditional Invalidation** | Clear cache on events (e.g., logout, data update). | User-specific; invalidasi manual via listeners. | useEffect(() => clearCache();, [userId]);. |
-| **Batch Caching** | Multi-set/get untuk related data. | App state (prefs + tokens); efisien untuk startup. | multiSet([['prefs', JSON.stringify(prefs)], ['token', token]]);. |
+| Teknik Caching | Deskripsi | Kapan Digunakan |
+| :--- | :--- | :--- |
+| **Cache-First (Offline)** | Cek data lokal dulu. Jika ada, pakai itu. Baru ambil dari API jika tidak ada atau *stale* (basi). | Data yang jarang berubah (profil pengguna, daftar kategori). |
+| **TTL (Time-to-Live)** | Tambahkan **timestamp** (waktu simpan) pada data. Data akan "basi" dan harus di-fetch ulang jika sudah melewati batas waktu (TTL). | Data yang *agak* sering berubah (berita, feed). Contoh: TTL 30 menit. |
+| **Conditional Invalidation** | Hapus *cache* secara sengaja saat ada kejadian tertentu (misal: pengguna *logout* atau ganti data). | Data spesifik pengguna. |
+| **Batch Caching** | Gunakan `multiSet`/`multiGet` untuk menyimpan/mengambil data terkait secara berkelompok. | Efisien untuk memuat status aplikasi di awal. |
 
-**Pola Penggunaan:** Custom hook: `const useCache = (key, ttl = 300000) => { const [data, setData] = useState(null); useEffect(() => { const load = async () => { const cached = await AsyncStorage.getItem(key); if (cached) { const { value, ts } = JSON.parse(cached); if (Date.now() - ts < ttl) { setData(value); return; } } // Fetch + cache }; load(); }, []); return [data, setData]; };`. Pola dengan networking: Cache API response post-fetch; check TTL sebelum use.
+**Praktik Terbaik Caching:**
 
-**Praktik Terbaik (2025):** Limit keys to <1000; size <6MB total (monitor dengan getAllKeys); namespacing + versioning (e.g., '@app:v2:prefs'); cleanup on app quit (AppState listener). Integrasi error handling: Try-catch di async ops; fallback to defaults jika corrupt (JSON.parse fail). RN 0.75+: AsyncStorage hooks dengan better concurrency untuk multi-thread access.
+* Jaga agar total ukuran data **<6MB**.
+* Gunakan TTL untuk data yang perlu *fresh*.
+* Bersihkan data lama secara rutin (cleanup) agar tidak memenuhi memori.
 
-**Pertimbangan Platform:** iOS: Fast read/write; Android: Slower on low-end devices; keduanya unencrypted—use Keychain/Keystore untuk sensitive (library opsional).
+---
 
-### C. Studi Kasus Caching dengan AsyncStorage: Contoh dan Penyelesaian
+### C. Studi Kasus
 
-**Tujuan:** Studi kasus menunjukkan aplikasi praktis caching di berbagai kondisi, dengan langkah implementasi dan debugging untuk real-world scenarios.
+#### Kasus 1: Caching Data API untuk Offline Access
 
-**Studi Kasus 1: Caching API Response untuk Offline Access (Cache-First)**
+* **Masalah:** Ingin pengguna bisa melihat daftar produk meski internet mati (offline).
+* **Solusi:** Terapkan **Cache-First** Strategy. Setelah ambil data produk dari API, **simpan** ke AsyncStorage. Saat aplikasi dibuka, **cek dulu** AsyncStorage. Jika ada, tampilkan.
 
-- **Deskripsi:** App fetch user list dari API; cache untuk offline view, kurangi API calls 50% (per studi Medium 2025).
-- **Kondisi:** User offline setelah load pertama; data tetap accessible.
-- **Langkah Implementasi:**
-  1. **Setup:** Custom hook useApiCache(key): Check AsyncStorage.getItem(key); jika ada, parse + return; else fetch + setItem(JSON.stringify({ data, timestamp: Date.now() })).
-  2. **Pola:** useEffect: const [data, loading] = useApiCache('@app:users'); if (loading) show spinner; fallback <Text>No data available</Text>.
-  3. **Debugging:** Console.log(cache hit/miss); test offline dengan airplane mode; clear cache untuk simulate fresh fetch.
-  4. **Outcome:** Reduced latency 80ms → 2ms on cache hit; UX seamless.
+#### Kasus 2: Menyimpan Pengaturan Pengguna dengan TTL
 
-**Studi Kasus 2: Persistent User Preferences dengan TTL (Settings Cache)**
+* **Masalah:** Simpan tema ('dark'/'light'). Ingin sesekali *sync* pengaturan dari server tanpa harus selalu *fetch* di setiap buka aplikasi.
+* **Solusi:** Simpan pengaturan dengan **TTL 24 Jam**. Jika sudah lebih dari 24 jam, anggap *cache* kadaluarsa dan coba *fetch* ulang dari server (jika ada koneksi).
 
-- **Deskripsi:** Simpan theme ('dark'/'light') dan language; TTL 24h untuk auto-refresh dari server sync; handle quota exceeded jika prefs terlalu besar.
-- **Kondisi:** User ubah prefs offline; apply on reconnect; evict jika expired.
-- **Langkah Implementasi:**
-  1. **Setup:** setPrefs(prefs): await AsyncStorage.setItem('@app:prefs', JSON.stringify({ prefs, ts: Date.now() })); getPrefs(): const cached = await getItem('@app:prefs'); if (Date.now() - ts < 86400000) return prefs.
-  2. **Pola:** Context provider: useState dari getPrefs(); listener on prefs change untuk setPrefs; fallback default prefs jika expired/missing.
-  3. **Debugging:** Log getAllKeys() untuk check size; simulate expiry dengan manual timestamp edit; test quota: multiSet large data hingga fail (catch error).
-  4. **Outcome:** Persistent UX; sync on reconnect; prevent bloat dengan TTL.
+#### Kasus 3: Optimasi Startup Aplikasi (Batch Load)
 
-**Studi Kasus 3: Batch Caching untuk App Startup (Multi-Key Load)**
+* **Masalah:** Aplikasi lambat di awal karena harus mengambil 3 data penting (token, pengaturan, status terakhir) secara berurutan.
+* **Solusi:** Gunakan **`AsyncStorage.multiGet(['token', 'prefs', 'status'])`** untuk mengambil ketiganya **secara bersamaan**, membuat waktu *loading* lebih cepat.
 
-- **Deskripsi:** Load multiple data (token, prefs, lastSeen) on app launch; batch untuk efisiensi, handle partial failure jika satu key corrupt.
-- **Kondisi:** App crash jika satu data missing; optimize load time dari 500ms ke 100ms.
-- **Langkah Implementasi:**
-  1. **Setup:** loadAppState(): const keys = ['@app:token', '@app:prefs', '@app:lastSeen']; const results = await multiGet(keys); parse each; fallback defaults jika null.
-  2. **Pola:** useEffect on App load: const [state, setState] = useState({}); loadAppState().then(setState); show loading hingga all loaded.
-  3. **Debugging:** Console.log(results); test corrupt: setItem corrupt JSON, catch JSON.parse error dengan default; measure time dengan console.time('loadState').
-  4. **Outcome:** Faster startup; resilient to partial corruption.
-
-**Praktik Terbaik untuk Caching (2025):** Gunakan TTL untuk volatile data; batch ops untuk >3 keys; monitor storage dengan getAllKeys periodically (e.g., on app background). Integrasi networking: Cache post-fetch; invalidasi on error (e.g., 304 Not Modified). RN 0.75+: Better async batching untuk concurrent reads.
-
-**Pertimbangan Platform:** iOS: Synchronous fallback untuk small reads; Android: Async required untuk UI thread safety.
-
-**Integrasi Keseluruhan:** AsyncStorage + networking: Cache API responses; load prefs on app start; error handling untuk quota/JSON errors.
+---
 
 ## 3. Contoh Implementasi
+
+Kode dibawah ini menunjukkan cara sederhana untuk **Simpan**, **Ambil**, dan **Hapus** data username, serta contoh penggunaan **Hook Caching** dengan TTL 5 menit.
 
 ### A. Contoh Dasar: Operasi Dasar AsyncStorage
 
@@ -250,94 +232,40 @@ export default CachedData;
 
 **Penjelasan:** Hook check TTL sebelum fetch; refresh manual; fallback jika expired.
 
-### C. Contoh Lanjutan: Batch Caching dan Studi Kasus
 
-Untuk studi kasus, gunakan kode di atas sebagai base.
-
-**Studi Kasus 1: Caching API Response untuk Offline Access**
-
-- Implementasi: Gunakan useTTLCache di fetchUsers; test offline: Data tetap tampil jika dalam TTL.
-- Debugging: Console.log('Cache hit'); airplane mode untuk simulate.
-
-**Studi Kasus 2: Persistent User Preferences**
-
-- Implementasi: multiGet(['@app:theme', '@app:lang']); fallback defaults jika null.
-- Debugging: getAllKeys() untuk verify; manual set corrupt JSON untuk test parse error.
-
-**Studi Kasus 3: Batch Startup Load**
-
-- Implementasi: loadAppState(): multiGet(keys); setState partial jika satu fail.
-- Debugging: console.time('load'); test dengan removeItem random keys.
-
-**Tips Debugging:** Console.log(keys/values); AsyncStorage.clear() untuk reset; test quota dengan loop setItem hingga fail.
+---
 
 ## 4. Rangkuman
 
-Hari ke-15 membangun persistensi dengan AsyncStorage melalui API dasar (set/get/remove/multi), pola caching (TTL, cache-first, batch), dan studi kasus (offline API cache, prefs TTL, startup batch) dengan langkah implementasi/debugging. Kunci: Namespacing + JSON serialization; TTL untuk freshness; multi-ops untuk efficiency. Integrasi ini ciptakan apps offline-capable dan performant, siap untuk advanced storage seperti SQLite.
+**Hari ke-15** ini mengajari kita cara menggunakan **AsyncStorage** untuk membuat aplikasi yang **datanya persisten** (tidak hilang) dan **mampu bekerja offline** (caching). Kunci utama yang harus diingat:
 
-**Latihan Selanjutnya:** Implementasikan caching untuk networking dari Hari ke-13; tambah TTL listener untuk auto-refresh.
+* **Namespacing** dan **JSON** untuk data yang rapi.
+* **TTL** untuk menjaga data tetap *fresh*.
+* **`multi-methods`** untuk operasi yang lebih cepat.
+
+Ini adalah fondasi kuat sebelum melangkah ke penyimpanan data yang lebih kompleks seperti basis data SQLite.
+
+---
 
 **Referensi:**
 
-- [Storing Data Permanently in React Native using AsyncStorage 2025](https://medium.com/@mahesh.nikate/storing-data-permanently-in-react-native-using-asyncstorage-2025-91a79b104fdb)
-- [Best Practices of using Data Caching in React Native Projects](https://medium.com/@tusharkumar27864/best-practices-of-using-data-caching-redis-local-storage-in-react-native-projects-e151c76b2df0)
-- [Optimizing Performance with Caching in React Native](https://blog.stackademic.com/optimizing-performance-with-caching-in-react-native-a-step-by-step-guide-a9cac5cd5389)
-- [Boosting React Native Performance with Caching](https://blog.mrinalmaheshwari.com/boosting-react-native-performance-with-caching-made-simple-79d5269f0cc3)
-- [React Native Data Persistence: A Comprehensive Guide](https://blog.krybot.com/t/react-native-data-persistence-a-comprehensive-guide/22294)
+* [Storing Data Permanently in React Native using AsyncStorage 2025](https://medium.com/@mahesh.nikate/storing-data-permanently-in-react-native-using-asyncstorage-2025-91a79b104fdb)
+* [Best Practices of using Data Caching in React Native Projects](https://medium.com/@tusharkumar27864/best-practices-of-using-data-caching-redis-local-storage-in-react-native-projects-e151c76b2df0)
+* [Optimizing Performance with Caching in React Native](https://blog.stackademic.com/optimizing-performance-with-caching-in-react-native-a-step-by-step-guide-a9cac5cd5389)
+* [Boosting React Native Performance with Caching](https://blog.mrinalmaheshwari.com/boosting-react-native-performance-with-caching-made-simple-79d5269f0cc3)
+* [React Native Data Persistence: A Comprehensive Guide](https://blog.krybot.com/t/react-native-data-persistence-a-comprehensive-guide/22294)
 
-## 5. Evaluasi Harian: Soal Praktik
+## 5. Evaluasi Harian (Soal Praktik)
 
 `Lanjutan project Mini E-Commerce`
 
-Soal-soal ini menguji kemampuan Anda untuk membuat aplikasi yang *offline-capable* dan efisien dalam manajemen data.
+Tugas-tugas ini berfokus untuk menguji kemampuanmu dalam mengelola data agar persisten / offline - capable:
 
----
-
-### a. Persistensi Token Otentikasi dan *Guarded Flow*
-
-**Tugas:** Integrasikan AsyncStorage untuk mengelola **token otentikasi** pengguna.
-
-1. Setelah *simulasi login* berhasil, **simpan** token ke AsyncStorage dengan *key* yang di-namespaced (misalnya, `'@ecom:authToken'`).
-2. Di **Root Navigator** aplikasi Anda, buat *logic* untuk memeriksa token ini saat aplikasi **pertama kali dimuat**.
-3. Jika token **ditemukan**, navigasikan pengguna langsung ke **Top Tabs Navigator** (Screen Home). Jika **tidak ditemukan**, navigasikan ke *Screen* **Login**.
-
----
-
-### b. *Cache-First* Strategy dengan TTL untuk Kategori Produk
-
-**Tugas:** Implementasikan *cache-first strategy* dengan **Time-to-Live (TTL)** untuk data **kategori produk** (data yang dianggap semi-statis).
-
-1. Buat fungsi yang pertama-tama mencoba memuat data kategori dari AsyncStorage.
-2. Data yang tersimpan harus memiliki **timestamp**. Jika data **kadaluarsa** (misalnya, lebih dari 30 menit), *fetch* data baru dari API dan perbarui *cache*.
-3. Jika pengguna **offline**, dan *cache* **tidak expired**, gunakan data dari *cache* tersebut. Jika *cache* expired dan offline, tampilkan pesan error.
-
----
-
-### c. Multi-Key Load Optimization di *Splash Screen*
-
-**Tugas:** Optimalkan waktu *loading* awal aplikasi dengan menggunakan **`AsyncStorage.multiGet`**.
-
-1. Saat aplikasi *loading* (di *Splash Screen*), gunakan `multiGet` untuk mengambil 3 *keys* penting secara bersamaan: **token otentikasi**, **preferensi pengguna** (misalnya, tema *dark/light*), dan **status notifikasi terakhir**.
-2. Proses *parsing* dan *state* aplikasi (otentikasi, tema) hanya boleh berlanjut setelah **semua 3 *key*** berhasil diambil (atau bernilai `null`).
-3. Ukur waktu *loading* menggunakan `console.time()` untuk membandingkan efisiensi *multiGet* dengan *getItem* sequential.
-
----
-
-### d. Persistensi *Cart State* dan *Merge* Incremental
-
-**Tugas:** Terapkan persistensi untuk status **Keranjang Belanja (Cart)** Anda, yang memungkinkan pengguna menutup aplikasi dan melanjutkan belanja.
-
-1. Gunakan **`AsyncStorage.mergeItem`** setiap kali item ditambahkan ke keranjang (untuk menghemat *write cycle*). *Merge* hanya *field* yang berubah (misalnya, `quantity` dari produk tertentu).
-2. Jika terjadi error **Quota Exceeded** saat menyimpan (simulasikan *try-catch* error untuk *setItem*), tampilkan *Alert* yang menyarankan pengguna untuk **menghapus beberapa item** dari keranjang mereka (simulasi *storage warning*).
-
----
-
-### e. *Cleanup* Data Sensitif Saat *Logout*
-
-**Tugas:** Buat fungsi **`handleLogout`** yang terpusat. Ketika pengguna menekan tombol **Logout** di *Screen* Profile/Settings:
-
-1. Gunakan **`AsyncStorage.multiRemove`** untuk menghapus **minimal 3 *keys*** yang sensitif atau bersifat pribadi secara serentak: `authToken`, `userPrefs`, dan `lastViewedProduct`.
-2. Setelah *data sensitif* dihapus, **reset** navigasi untuk memastikan pengguna kembali ke *Screen* Login dan menghapus *stack* navigasi yang lama.
+* **a. Persistensi Token Otentikasi:** Simpan **token masuk** di AsyncStorage. Cek token ini saat aplikasi pertama kali dibuka untuk menentukan apakah pengguna langsung ke **Home** atau harus ke **Login**. (Guard Flow)
+* **b. Cache-First Kategori Produk:** Terapkan **TTL (30 menit)** untuk data kategori produk. Gunakan *cache* jika ada dan belum kadaluarsa, terutama saat **offline**.
+* **c. Optimasi Multi-Key Load:** Gunakan **`multiGet`** saat load aplikasi, untuk mengambil data - data penting, e.g (token, tema, status notifikasi) secara serentak untuk mempercepat *loading*.
+* **d. Persistensi Cart (Keranjang):** Gunakan **`mergeItem`** saat ada perubahan kecil (misal: tambah jumlah item) di keranjang. Tangani simulasi **error Quota Exceeded** jika penyimpanan penuh.
+* **e. Cleanup Saat Logout:** Buat fungsi *logout* terpusat yang menggunakan **`multiRemove`** untuk menghapus semua 3 data sensitif (token, prefs, dll.) sekaligus.
 
 ## Ketentuan
 
