@@ -2,7 +2,7 @@
 
 Materi ini membahas cara menyimpan data-data penting (seperti *password* atau *token*) di aplikasi, menggunakan sistem keamanan tingkat perangkat keras (**Hardware-Encrypted**), sehingga data tidak bisa dicuri meski ponsel dibongkar. Kita akan menggunakan *library* **`react-native-keychain`**.
 
-## 1. Tujuan Pembelajaran (Apa yang Akan Kamu Kuasai)
+## 1. Tujuan Pembelajaran
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
