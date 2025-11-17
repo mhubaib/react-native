@@ -1,121 +1,82 @@
-# Hari ke-16 - Storage: Keystore System
+# Hari ke-16: Storage: Keystore System
 
-## 1. Tujuan Pembelajaran
+Materi ini membahas cara menyimpan data-data penting (seperti *password* atau *token*) di aplikasi, menggunakan sistem keamanan tingkat perangkat keras (**Hardware-Encrypted**), sehingga data tidak bisa dicuri meski ponsel dibongkar. Kita akan menggunakan *library* **`react-native-keychain`**.
 
-Setelah menyelesaikan pembelajaran hari ini,siswa diharapkan mampu:
+## 1. Tujuan Pembelajaran (Apa yang Akan Kamu Kuasai)
 
-- Memahami Keystore system sebagai penyimpanan aman hardware-encrypted (Keychain iOS, Keystore Android), serta mengimplementasikannya menggunakan react-native-keychain untuk operasi dasar seperti setGenericPassword, getGenericPassword, dan resetGenericPassword, memastikan kredensial aman dari reverse engineering atau app compromise.
-- Mengimplementasikan pola penggunaan react-native-keychain untuk menyimpan data sensitif seperti auth tokens, passwords, atau API keys, dengan pengelolaan options seperti service namespacing dan secure sharing antar apps.
-- Mengelola fitur lanjutan seperti integration dengan AsyncStorage dari Hari ke-15 untuk hybrid storage (secure untuk tokens, unsecure untuk prefs), sambil menangani errors seperti access denied.
-- Menerapkan praktik terbaik seperti namespacing services untuk isolation, secure enclave usage di iOS untuk tamper-proof storage, dan fallback mechanisms untuk devices dengan constraints, memastikan aplikasi yang compliant dengan GDPR/Apple privacy guidelines.
-- Menganalisis dan menyelesaikan troubleshooting umum seperti keychain access denied atau cross-app sharing failures, dengan langkah-langkah debugging menggunakan console dan device simulators.
-- Menerapkan aksesibilitas dan security audits (e.g., avoid logging sensitive data), untuk storage yang scalable dan secure di RN 0.75+.
-- Membangun prototipe dengan Keystore lengkap, seperti secure login flow dengan token storage, siap untuk integrasi dengan networking (Hari ke-13) atau auth flows.
+Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
+
+* **Memahami Keystore:** Tahu bahwa Keystore (dikenal sebagai **Keychain di iOS** dan **Keystore di Android**) adalah tempat penyimpanan yang **sangat aman** karena dienkripsi oleh perangkat keras ponsel, beda dengan AsyncStorage (Hari ke-15) yang tidak dienkripsi.
+* **Menggunakan Perintah Aman:** Mampu menggunakan fungsi utama dari `react-native-keychain` seperti **`setGenericPassword`** (simpan aman), **`getGenericPassword`** (ambil aman), dan **`resetGenericPassword`** (hapus aman).
+* **Menyimpan Data Rahasia:** Menggunakan Keystore untuk menyimpan data sensitif, seperti **token otentikasi**, **kata sandi**, atau **kunci API**.
+* **Mengelola Gabungan Penyimpanan (Hybrid Storage):** Menggabungkan Keystore (untuk data rahasia) dengan AsyncStorage (untuk pengaturan biasa) agar aplikasi tetap aman dan cepat.
+* **Menerapkan Praktik Terbaik Keamanan:** Selalu memberi nama unik (**namespacing**) pada layanan yang disimpan (misal: `'@app:auth'`), dan tahu cara mengatasi jika terjadi masalah akses Keystore (misalnya karena kunci perangkat diubah).
+* **Mengatasi Masalah Keamanan:** Menganalisis dan memperbaiki masalah umum seperti izin akses ditolak (*access denied*) atau kegagalan berbagi data antar aplikasi.
+* **Membangun Fitur Aman:** Membuat alur *login* yang aman, di mana *token* disimpan langsung di Keystore.
+
+---
 
 ## 2. Materi Pembelajaran
 
-Bagian ini menjelaskan Keystore system secara mendalam, termasuk API react-native-keychain, pola penggunaan, dan pertimbangan security. Keystore menyimpan data di secure hardware (Secure Enclave iOS, Trusted Execution Environment Android), terlindung dari app code dan OS access. react-native-keychain adalah wrapper cross-platform yang menyederhanakan akses, dengan dukungan secure sharing antar apps. Per 2025, best practices menekankan least privilege (store minimal data) dan regular key rotation. Integrasikan dengan error handling (Hari ke-14) untuk robustness.
+Keystore adalah lapisan keamanan perangkat keras yang terisolasi (**Secure Enclave** di iOS, **TEE/Trusted Execution Environment** di Android). Data yang disimpan di sini dilindungi dari aplikasi lain, sistem operasi, bahkan dari upaya *jailbreak* atau *root*.
 
-### A. Pengenalan Keystore System: Konsep dan Setup react-native-keychain
+### A. Konsep Keystore dan Perbedaan dengan AsyncStorage
 
-**Tujuan:** Keystore adalah secure storage untuk sensitive data, membedakan dari AsyncStorage (Hari ke-15) yang unencrypted; pahami untuk memilih use case yang tepat (secure: tokens; unsecure: prefs).
+| Fitur | AsyncStorage (Hari ke-15) | Keystore/Keychain (Hari ke-16) |
+| :--- | :--- | :--- |
+| **Keamanan** | **Tidak Aman** (Unencrypted) | **Sangat Aman** (Hardware-Encrypted) |
+| **Kegunaan** | Preferensi, Cache, Data Non-Sensitif | **Token, Password, API Key** (Data Rahasia) |
+| **Akses** | Mudah, disimpan sebagai teks biasa | Membutuhkan izin khusus, dilindungi kunci/sidik jari |
+| **Lokasi** | Penyimpanan Internal Aplikasi | Chip Keamanan Perangkat Keras |
 
-**Konsep Kunci:**
+**`react-native-keychain`** adalah jembatan yang menyederhanakan akses ke sistem Keystore/Keychain di kedua platform (iOS dan Android) dengan API tunggal.
 
-- **iOS Keychain:** Encrypted key-value store di Secure Enclave; access via entitlements; supports sharing via app groups.
-- **Android Keystore:** Hardware-backed (TEE); supports key aliases; access control via permissions.
-- **react-native-keychain:** Unified API; stores as generic passwords (username/password pairs); options for service isolation and sharing.
-- **Security Benefits:** Data aman dari app uninstall/reinstall (persistent); anti-tampering; protected from root/jailbreak (to extent hardware allows).
+### B. Perintah Dasar `react-native-keychain`
 
-**Setup Dasar:** Instal `npm i react-native-keychain`; auto-link RN 0.60+; iOS: Tambah `keychain-access-groups` di Info.plist jika sharing; Android: Permissions di manifest. Import: `import * as Keychain from 'react-native-keychain';`.
+Library ini menyimpan data dalam format "Generic Password" (pasangan *username* dan *password*), meskipun kita sering memakainya untuk menyimpan *token* saja.
 
-**Pola Penggunaan:** Basic: `Keychain.setGenericPassword('username', 'password', { service: '@app:auth' });`. Dengan sharing: `{ sharedPassword: true }` untuk cross-app.
+| Perintah | Fungsi | Catatan Penting |
+| :--- | :--- | :--- |
+| `setGenericPassword(user, pass, options)` | **Simpan** sepasang *username* dan *password* (atau *user ID* dan *Token*). | **Wajib** pakai *options* `{ service: '@app:nama_unik' }` untuk isolasi. |
+| `getGenericPassword(options)` | **Ambil** *username* dan *password* yang tersimpan. | Akan mengembalikan `null` jika tidak ada. |
+| `resetGenericPassword(options)` | **Hapus** pasangan yang tersimpan dari Keystore. | Gunakan saat *logout*. |
 
-**Praktik Terbaik (2025):** Gunakan service namespacing untuk isolation; minimize stored data (tokens only); fallback to AsyncStorage jika Keystore unavailable (e.g., emulator). RN 0.75+: Better integration dengan JSI untuk faster async ops.
+**Options Kunci (Penting):**
 
-**Pertimbangan Platform:** iOS: Requires provisioning profile untuk enclave; Android: API 23+ untuk advanced features; test di physical devices (emulators lack secure hardware).
+* `service`: **Nama unik** yang wajib kamu berikan. Ini seperti *namespacing* agar data kamu tidak bentrok dengan data aplikasi lain.
+* `accessible`: (**iOS saja**) Menentukan kapan data bisa diakses (misal: 'WhenUnlocked' = hanya saat perangkat tidak terkunci).
 
-### B. API react-native-keychain: Methods dan Options
+**Pola Sederhana:**
 
-**Tujuan:** API menyediakan methods sederhana untuk secure ops; pahami untuk implementasi aman.
+1. Simpan Token: `await Keychain.setGenericPassword('myUserId', myToken, { service: '@app:auth' });`
+2. Ambil Token: `const creds = await Keychain.getGenericPassword({ service: '@app:auth' }); if (creds) { console.log(creds.password); }`
 
-**Methods Kunci (v2.0+, 2025):**
+---
 
-| Method | Tipe | Deskripsi | Return | Catatan & Best Practices |
-|--------|------|-----------|--------|--------------------------|
-| `setGenericPassword(username, password, options)` | async (string, string, object) => Promise<boolean> | Simpan pair username/password. | true/false (success) | Options: { service: '@app:auth' }; username for token ID, password for secret. |
-| `getGenericPassword(options)` | async (object) => Promise<{ username, password }|null> | Ambil pair; null jika tidak ada. | Object/null | Options: { service: '@app:auth' }; handle null dengan login flow. |
-| `resetGenericPassword(options)` | async (object) => Promise<boolean> | Hapus pair. | true/false | Options: { service: '@app:auth' }; gunakan di logout; confirm dengan user dialog. |
-| `setInternetCredentials(hostname, username, password, options)` | async (string, string, string, object) => Promise<boolean> | Simpan web creds (legacy). | true/false | Deprecated; gunakan generic untuk modern; options sama dengan setGenericPassword. |
-| `getInternetCredentials(hostname, options)` | async (string, object) => Promise<{ username, password }|null> | Ambil web creds. | Object/null | Serupa generic; migrasi ke generic untuk simplicity. |
+### C. Pola Lanjutan: Hybrid Storage (Penyimpanan Gabungan)
 
-**Options Kunci (Shared):**
+Pola ini menggabungkan Keystore dan AsyncStorage untuk performa dan keamanan terbaik:
 
-| Option | Tipe | Deskripsi | Default | Catatan Platform |
-|--------|------|-----------|---------|------------------|
-| `service` | string | Namespace unik (e.g., bundle ID). | App bundle | Wajib untuk isolation; '@com.myapp:auth' untuk avoid conflicts. |
-| `accessible` | 'AfterFirstUnlock'/'AfterFirstUnlockThisDeviceOnly'/'Always'/'WhenUnlocked'/'WhenUnlockedThisDeviceOnly' | Timing access. | 'Any' | iOS only; 'AfterFirstUnlock' for post-boot access; 'Always' for background. |
-| `sharedPassword` | boolean | Enable sharing antar apps. | false | iOS: App groups; Android: Keystore sharing; gunakan untuk SSO. |
+1. **Keystore:** Simpan **Token Otentikasi** dan **Kunci API** (data rahasia).
+2. **AsyncStorage:** Simpan **Preferensi Tema**, **Data Cache API** (data tidak rahasia).
 
-**Pola Penggunaan:** Secure token: `await setGenericPassword('userId', token, { service: '@app:auth' }); const creds = await getGenericPassword({ service: '@app:auth' }); if (creds) useToken(creds.password);`. Pola logout: `await resetGenericPassword({ service: '@app:auth' });`.
+**Keuntungan:** Pemuatan data aplikasi di awal menjadi lebih cepat karena kita bisa mengambil data dari Keystore dan AsyncStorage secara **paralel** menggunakan `Promise.all`.
 
-**Praktik Terbaik (2025):** Selalu gunakan service untuk namespace; test di device (emulator limited); fallback to AsyncStorage jika Keystore unavailable; avoid storing large data (use AsyncStorage for non-sensitive). Integrasi error (Hari ke-14): Try-catch di async calls; handle false returns dengan user prompts. RN 0.75+: Better support untuk Keychain APIs di iOS 18+ dengan async queries.
+### D. Studi Kasus Keamanan
 
-**Pertimbangan Platform:** iOS: Keychain sharing via groups (add to entitlements); Android: Keystore aliases untuk key rotation; keduanya support secure notes untuk metadata.
+#### Kasus 1: Penyimpanan Token Otentikasi Aman
 
-### C. Pola Penggunaan Lanjutan: Secure Sharing dan Hybrid Storage
+* **Masalah:** Token JWT harus disimpan sangat aman.
+* **Solusi:** Setelah *login*, token disimpan menggunakan `setGenericPassword` di Keystore. Saat aplikasi perlu memanggil API, token diambil menggunakan `getGenericPassword`. Token **dihapus total** saat *logout* dengan `resetGenericPassword`.
 
-**Tujuan:** Integrasi secure sharing untuk SSO; hybrid dengan AsyncStorage untuk tiered storage (secure untuk tokens, unsecure untuk prefs).
+#### Kasus 2: Penanganan Akses Ditolak
 
-**Pola Secure Sharing:**
+* **Masalah:** Pengguna mengubah kata sandi perangkat, dan Keystore memblokir akses ke token yang lama (Access Denied).
+* **Solusi:** Saat mencoba `getGenericPassword`, tambahkan `try-catch`. Jika error yang terjadi adalah "access denied", **paksa pengguna login ulang** dan hapus token yang lama untuk mencegah *bug* keamanan.
 
-- Set: `{ sharedPassword: true, service: '@app:shared' }`; get dari app lain.
-- Pola: On login, set shared token; other apps get via same service.
-
-**Hybrid Storage:** Sensitive (tokens) di Keychain; non-sensitive (theme) di AsyncStorage; sync via event listeners (e.g., on login, set both).
-
-**Praktik Terbaik:** Minimize stored data; rotate tokens periodically; test in incognito mode (clear storage). 2025: Support untuk post-quantum keys di Android 15+ via library options.
-
-### D. Studi Kasus Keystore dengan Langkah Penyelesaian
-
-**Tujuan:** Studi kasus menunjukkan aplikasi praktis, dengan langkah implementasi dan debugging.
-
-**Studi Kasus 1: Secure Auth Token Storage**
-
-- **Deskripsi:** Simpan JWT token post-login; akses aman untuk high security.
-- **Langkah Implementasi:**
-  1. **Setup:** On login: `await setGenericPassword('userId', token, { service: '@app:auth' });`.
-  2. **Pola:** useEffect: `const creds = await getGenericPassword({ service: '@app:auth' }); if (creds) { setToken(creds.password); }`; on logout: `await resetGenericPassword({ service: '@app:auth' });`.
-  3. **Debugging:** Console.log(creds ? 'Access granted' : 'No token'); test dengan device restart; fallback: if (error) show login prompt.
-  4. **Outcome:** Token aman; easy access; prevent leaks on uninstall.
-
-**Studi Kasus 2: Hybrid Storage untuk User Profile**
-
-- **Deskripsi:** Sensitive (token) di Keychain; non-sensitive (avatar URL) di AsyncStorage; sync on login.
-- **Langkah Implementasi:**
-  1. **Setup:** Login: `await setGenericPassword('userId', token, { service: '@app:auth' }); await AsyncStorage.setItem('@app:profile', JSON.stringify({ avatar: 'url' }));`.
-  2. **Pola:** Load: `const [creds, profile] = await Promise.all([getGenericPassword({ service: '@app:auth' }), AsyncStorage.getItem('@app:profile')]);`.
-  3. **Debugging:** Log 'Keychain access: success/fail'; test corruption dengan manual edit storage (adb shell); ensure sync on error: if Keychain fail, fallback to AsyncStorage token (less secure).
-  4. **Outcome:** Tiered security; fast load dengan parallel ops; resilient to partial failures.
-
-**Studi Kasus 3: Secure Key Rotation on Logout**
-
-- **Deskripsi:** Rotate token on logout; clear both Keychain dan AsyncStorage; handle access denied errors.
-- **Langkah Implementasi:**
-  1. **Setup:** Logout: `try { await resetGenericPassword({ service: '@app:auth' }); await AsyncStorage.removeItem('@app:token'); } catch (e) { if (e.message.includes('access denied')) promptUserReauth(); }`.
-  2. **Pola:** Listener on logout event; verify clear dengan getGenericPassword (expect null).
-  3. **Debugging:** Console.error(e.message) untuk categorize; test denied access dengan device lock; manual clear: adb shell untuk Android storage wipe.
-  4. **Outcome:** Clean slate on logout; error-specific recovery; prevent stale data leaks.
-
-**Praktik Terbaik untuk Studi Kasus (2025):** Test di physical devices; audit keys dengan custom getAllKeys (via service filter); comply with privacy (minimize data, consent prompts).
-
-**Pertimbangan Platform:** iOS: Keychain queries via SecItemCopyMatching for advanced; Android: Keystore aliases untuk rotation; keduanya support secure notes untuk metadata.
-
-**Integrasi Keseluruhan:** Keystore + AsyncStorage: Secure tokens di Keychain, prefs di AsyncStorage; load hybrid on app start; error handling untuk access denials.
+---
 
 ## 3. Contoh Implementasi
-
-Kode siap di React Native CLI. Import: `import * as Keychain from 'react-native-keychain';`.
 
 ### A. Contoh Dasar: Operasi Dasar react-native-keychain
 
@@ -295,15 +256,19 @@ export default HybridStorage;
 
 ## 4. Rangkuman
 
-Hari ke-16 membangun secure storage melalui Keystore system dengan react-native-keychain: API dasar (set/get/resetGenericPassword), pola secure sharing (sharedPassword), dan hybrid dengan AsyncStorage untuk tiered persistence. Kunci: Service namespasing untuk isolation; secure options seperti accessible untuk timing; error handling untuk access denials. Integrasi ini ciptakan apps aman yang lindungi sensitive data, resilient to device changes, dan compliant dengan privacy standards, siap untuk advanced features seperti key rotation.
+**Hari ke-16** mengajarkan cara membuat aplikasi kamu **aman** dan **patuh pada standar privasi** (GDPR/Apple). Gunakan **Keystore** untuk semua data rahasia (token, kunci) dan **AsyncStorage** untuk data biasa (preferensi, cache). Kunci utamanya adalah:
 
-**Latihan Selanjutnya:** Implementasikan secure login dengan token storage; hybrid cache tokens dari networking Hari ke-13.
+* **Pilih Alat Tepat:** Keystore untuk keamanan, AsyncStorage untuk kecepatan dan non-sensitif.
+* **Namespacing:** Selalu gunakan *service* unik untuk isolasi data.
+* **Error Handling:** Antisipasi *access denied* dan kegagalan Keystore dengan meminta pengguna login ulang.
+
+---
 
 **Referensi:**
 
-- [react-native-keychain - GitHub](https://github.com/oblador/react-native-keychain)
-- [react-native-keychain Documentation](https://oblador.github.io/react-native-keychain/docs/)
-- [Secure Storage in React Native Using Keychain and Keystore - Medium](https://medium.com/@prem__kumar/secure-your-react-native-app-with-react-native-keychain-06d9e77b7ea2)
+* [react-native-keychain - GitHub](https://github.com/oblador/react-native-keychain)
+* [react-native-keychain Documentation](https://oblador.github.io/react-native-keychain/docs/)
+* [Secure Storage in React Native Using Keychain and Keystore - Medium](https://medium.com/@prem__kumar/secure-your-react-native-app-with-react-native-keychain-06d9e77b7ea2)
 
 ## 5. Evaluasi Harian: Soal Praktik
 
