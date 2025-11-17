@@ -265,7 +265,7 @@ Tugas-tugas ini berfokus untuk menguji kemampuanmu dalam mengelola data agar per
 * **b. Cache-First Kategori Produk:** Terapkan **TTL (30 menit)** untuk data kategori produk. Gunakan *cache* jika ada dan belum kadaluarsa, terutama saat **offline**.
 * **c. Optimasi Multi-Key Load:** Gunakan **`multiGet`** saat load aplikasi, untuk mengambil data - data penting, e.g (token, tema, status notifikasi) secara serentak untuk mempercepat *loading*.
 * **d. Persistensi Cart (Keranjang):** Gunakan **`mergeItem`** saat ada perubahan kecil (misal: tambah jumlah item) di keranjang. Tangani simulasi **error Quota Exceeded** jika penyimpanan penuh.
-* **e. Cleanup Saat Logout:** Buat fungsi *logout* terpusat yang menggunakan **`multiRemove`** untuk menghapus semua 3 data sensitif (token, prefs, dll.) sekaligus.
+* **e. Cleanup Saat Logout:** Buat fungsi *logout* terpusat yang menggunakan **`multiRemove`** untuk menghapus semua data sensitif (token, prefs, dll.) sekaligus.
 
 ## Ketentuan
 
