@@ -6,8 +6,8 @@ Materi ini membahas cara menyimpan data-data penting (seperti *password* atau *t
 
 Setelah menyelesaikan pembelajaran hari ini, siswa diharapkan mampu:
 
-* **Memahami Keystore:** Tahu bahwa Keystore (dikenal sebagai **Keychain di iOS** dan **Keystore di Android**) adalah tempat penyimpanan yang **sangat aman** karena dienkripsi oleh perangkat keras ponsel, beda dengan AsyncStorage (Hari ke-15) yang tidak dienkripsi.
-* **Menggunakan Perintah Aman:** Mampu menggunakan fungsi utama dari `react-native-keychain` seperti **`setGenericPassword`** (simpan aman), **`getGenericPassword`** (ambil aman), dan **`resetGenericPassword`** (hapus aman).
+* **Memahami konsep Keystore:** Tahu bahwa Keystore (dikenal sebagai **Keychain di iOS** dan **Keystore di Android**) adalah tempat penyimpanan yang **sangat aman** karena dienkripsi oleh perangkat keras ponsel, beda dengan AsyncStorage (Hari ke-15) yang tidak dienkripsi.
+* **Menggunakan Perintah Dasar:** Mampu menggunakan fungsi utama dari `react-native-keychain` seperti **`setGenericPassword`** (simpan aman), **`getGenericPassword`** (ambil aman), dan **`resetGenericPassword`** (hapus aman).
 * **Menyimpan Data Rahasia:** Menggunakan Keystore untuk menyimpan data sensitif, seperti **token otentikasi**, **kata sandi**, atau **kunci API**.
 * **Mengelola Gabungan Penyimpanan (Hybrid Storage):** Menggabungkan Keystore (untuk data rahasia) dengan AsyncStorage (untuk pengaturan biasa) agar aplikasi tetap aman dan cepat.
 * **Menerapkan Praktik Terbaik Keamanan:** Selalu memberi nama unik (**namespacing**) pada layanan yang disimpan (misal: `'@app:auth'`), dan tahu cara mengatasi jika terjadi masalah akses Keystore (misalnya karena kunci perangkat diubah).
