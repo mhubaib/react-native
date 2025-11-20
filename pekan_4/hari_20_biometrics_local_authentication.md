@@ -75,7 +75,6 @@ Metode utama untuk memunculkan dialog/popup sistem yang meminta user menempelkan
 | Opsi | Tipe | Wajib? | Deskripsi & Fungsi |
 | :--- | :--- | :--- | :--- |
 | `promptMessage` | `string` | **Ya** | Judul atau pesan utama yang muncul di dialog. Gunakan kalimat aksi, misal: *"Konfirmasi Pembayaran"* atau *"Login Cepat"*. |
-| `cancelButtonText`| `string` | **Ya (Android)** | Teks untuk tombol pembatalan. Di Android, tombol ini wajib ada agar user tidak terjebak di layar prompt. Contoh: *"Batal"* atau *"Gunakan PIN"*. |
 | `fallbackPromptMessage` | `string` | Tidak | (iOS Only) Pesan yang muncul di tombol fallback jika scan gagal pertama kali. |
 
 * **Output (Promise Object):**
