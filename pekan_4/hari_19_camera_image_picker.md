@@ -4,7 +4,7 @@
 
 Setelah menyelesaikan materi ini, Anda diharapkan mampu:
 
-* **Memahami Dasar:** Mengerti cara kerja akses kamera dan galeri sebagai fitur native serta menggunakan library `react-native-image-picker`.
+* **Memahami Konsep:** Mengerti cara kerja akses kamera dan galeri sebagai fitur native serta menggunakan library `react-native-image-picker`.
 * **Mengelola Izin (Permissions):** Mengatur izin akses kamera dan galeri baik untuk iOS (Info.plist) maupun Android (Runtime Permission), termasuk penanganan jika izin ditolak.
 * **Menguasai API:** Menggunakan fitur dasar seperti `launchCamera` (ambil foto/video) dan `launchImageLibrary` (pilih dari galeri) dengan pengaturan opsi seperti kualitas gambar, ukuran, dan format.
 * **Implementasi UX & Best Practices:** Membuat antarmuka yang responsif (loading state), melakukan kompresi gambar untuk performa, serta menyimpan hasil dengan aman.
