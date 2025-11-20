@@ -127,68 +127,45 @@ Berikut adalah contoh kode yang siap digunakan. Pastikan Anda sudah melakukan se
 
 ### A. Dasar: Membuka Kamera
 
-Kode ini menangani izin kamera di Android dan menampilkan hasil foto.
-
 ```jsx
-import React, { useState } from 'react';
-import { View, Button, Image, Alert, PermissionsAndroid, Platform } from 'react-native';
-import { launchCamera } from 'react-native-image-picker';
+import { useState } from 'react';
+import { View, Button, Image, Alert } from 'react-native';
+import { CameraOptions, ImagePickerResponse, launchCamera } from 'react-native-image-picker';
 
 const BasicCamera = () => {
-  const [photo, setPhoto] = useState(null);
+    const [photo, setPhoto] = useState<ImagePickerResponse | null>(null);
 
-  // Fungsi meminta izin kamera (Khusus Android)
-  const requestPermission = async () => {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Izin Kamera',
-          message: 'Aplikasi butuh akses kamera untuk ambil foto',
-          buttonPositive: 'OK',
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    return true; // iOS diatur di Info.plist
-  };
+    const takePhoto = async () => {
+        const options: CameraOptions = {
+            mediaType: 'photo',
+            quality: 0.7,       // Kompresi gambar
+            saveToPhotos: true, // Simpan ke galeri publik
+        };
 
-  const takePhoto = async () => {
-    const hasPermission = await requestPermission();
-    if (!hasPermission) {
-      Alert.alert('Ditolak', 'Tidak dapat mengakses kamera');
-      return;
-    }
-
-    const options = {
-      mediaType: 'photo',
-      quality: 0.7,       // Kompresi gambar
-      saveToPhotos: true, // Simpan ke galeri publik
+        launchCamera(options, (response) => {
+            if (response.didCancel) {
+                console.log('User membatalkan');
+            } else if (response.errorCode) {
+                Alert.alert('Error', response.errorMessage);
+            } else if (response.assets) {
+                // Ambil aset pertama
+                console.log(response)
+                setPhoto(response.assets[0]);
+            }
+        });
     };
 
-    launchCamera(options, (response) => {
-      if (response.didCancel) {
-        console.log('User membatalkan');
-      } else if (response.errorCode) {
-        Alert.alert('Error', response.errorMessage);
-      } else if (response.assets) {
-        // Ambil aset pertama
-        setPhoto(response.assets[0]);
-      }
-    });
-  };
-
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Button title="Ambil Foto" onPress={takePhoto} />
-      {photo && (
-        <Image
-          source={{ uri: photo.uri }}
-          style={{ width: 200, height: 200, marginTop: 20 }}
-        />
-      )}
-    </View>
-  );
+    return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <Button title="Ambil Foto" onPress={takePhoto} />
+            {photo && (
+                <Image
+                    source={{ uri: photo.uri }}
+                    style={{ width: 200, height: 200, marginTop: 20 }}
+                />
+            )}
+        </View>
+    );
 };
 
 export default BasicCamera;
