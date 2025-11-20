@@ -43,13 +43,6 @@ npm install @sbaiahmed1/react-native-biometrics
 
 ### B. API, Method, & Options (Penjelasan Mendalam)
 
-Sebelum menggunakan fungsi-fungsi di bawah, Anda harus menginisialisasi *instance* dari library:
-
-```javascript
-import ReactNativeBiometrics from '@sbaiahmed1/react-native-biometrics';
-const rnBiometrics = new ReactNativeBiometrics(); // Inisialisasi
-```
-
 Berikut adalah rincian metode utama yang tersedia:
 
 #### 1\. `isSensorAvailable()`
@@ -134,36 +127,42 @@ Kode ini mendeteksi apakah HP user mendukung Face ID, Touch ID, atau Biometrik A
 
 ```jsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
-import ReactNativeBiometrics, { FaceID } from '@sbaiahmed1/react-native-biometrics';
+import { View, Text } from 'react-native';
+import { isSensorAvailable } from '@sbaiahmed1/react-native-biometrics';
+
+type SensorInfo = {
+    available: boolean;        // Whether biometric auth is available
+    biometryType?: string;     // Type of biometry ('FaceID', 'TouchID', 'Fingerprint', etc.)
+    error?: string;            // Error message if not available
+    errorCode?: string;        // Error code if not available (platform-specific)
+}
 
 const CheckSensor = () => {
-  const [status, setStatus] = useState('Mengecek Sensor...');
-  
-  useEffect(() => {
-    const rnBiometrics = new ReactNativeBiometrics();
+    const [status, setStatus] = useState('Mengecek Sensor...');
 
-    const check = async () => {
-      const { available, biometryType } = await rnBiometrics.isSensorAvailable();
+    useEffect(() => {
 
-      if (available) {
-        if (biometryType === FaceID) {
-          setStatus('Face ID Tersedia');
-        } else {
-          setStatus('Sensor Biometrik Tersedia');
-        }
-      } else {
-        setStatus('Biometrik Tidak Tersedia');
-      }
-    };
-    check();
-  }, []);
+        const check = async () => {
+            const sensorInfo: SensorInfo = await isSensorAvailable();
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: 18 }}>{status}</Text>
-    </View>
-  );
+            if (sensorInfo.available) {
+                if (sensorInfo.biometryType === 'FaceID') {
+                    setStatus('Face ID Tersedia');
+                } else {
+                    setStatus('Sensor Biometrik Tersedia');
+                }
+            } else {
+                setStatus('Biometrik Tidak Tersedia');
+            }
+        };
+        check();
+    }, []);
+
+    return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 18 }}>{status}</Text>
+        </View>
+    );
 };
 
 export default CheckSensor;
@@ -174,35 +173,31 @@ export default CheckSensor;
 Kode ini memicu dialog biometrik. Perhatikan penggunaan `promptMessage` dan `cancelButtonText` yang wajib untuk kompatibilitas Android.
 
 ```jsx
-import React from 'react';
 import { View, Button, Alert } from 'react-native';
-import ReactNativeBiometrics from '@sbaiahmed1/react-native-biometrics';
+import {simplePrompt} from '@sbaiahmed1/react-native-biometrics';
 
 const SimpleAuth = () => {
-  const handleAuth = async () => {
-    const rnBiometrics = new ReactNativeBiometrics();
+    const handleAuth = async () => {
+        try {
+            const { success } = await simplePrompt(
+                'Konfirmasi Identitas'
+            );
 
-    try {
-      const { success } = await rnBiometrics.simplePrompt({
-        promptMessage: 'Konfirmasi Identitas', // Muncul di popup
-        cancelButtonText: 'Batalkan',          // Wajib untuk Android
-      });
+            if (success) {
+                Alert.alert('Berhasil', 'Identitas Terverifikasi!');
+            } else {
+                console.log('User membatalkan atau verifikasi gagal');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Terjadi kesalahan pada sensor');
+        }
+    };
 
-      if (success) {
-        Alert.alert('Berhasil', 'Identitas Terverifikasi!');
-      } else {
-        console.log('User membatalkan atau verifikasi gagal');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan pada sensor');
-    }
-  };
-
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Button title="Tes Biometrik" onPress={handleAuth} />
-    </View>
-  );
+    return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Button title="Tes Biometrik" onPress={handleAuth} />
+        </View>
+    );
 };
 
 export default SimpleAuth;
@@ -215,72 +210,70 @@ Ini adalah implementasi paling umum di aplikasi profesional: Login sekali, selan
 *(Pastikan sudah install: `npm install react-native-keychain`)*
 
 ```jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Button, Alert, TextInput, Text } from 'react-native';
-import ReactNativeBiometrics from '@sbaiahmed1/react-native-biometrics';
+import { simplePrompt, isSensorAvailable } from '@sbaiahmed1/react-native-biometrics';
 import * as Keychain from 'react-native-keychain';
 
 const SecureLogin = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  
-  // 1. Login Manual & Simpan Kredensial
-  const handleLoginManual = async () => {
-    // Simulasi request ke server...
-    if (username === 'user' && password === '1234') {
-      // Simpan ke Keychain (Brankas)
-      await Keychain.setGenericPassword(username, password);
-      Alert.alert('Sukses', 'Login berhasil & disimpan untuk Biometrik');
-    } else {
-      Alert.alert('Gagal', 'Username/Password salah');
-    }
-  };
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
 
-  // 2. Login via Biometrik
-  const handleLoginBiometric = async () => {
-    const rnBiometrics = new ReactNativeBiometrics();
+    // 1. Login Manual & Simpan Kredensial
+    const handleLoginManual = async () => {
+        // Simulasi request ke server...
+        if (username === 'user' && password === '1234') {
+            // Simpan ke Keychain (Brankas)
+            await Keychain.setGenericPassword(username, password);
+            Alert.alert('Sukses', 'Login berhasil & disimpan untuk Biometrik');
+        } else {
+            Alert.alert('Gagal', 'Username/Password salah');
+        }
+    };
 
-    // Cek ketersediaan dulu
-    const { available } = await rnBiometrics.isSensorAvailable();
-    if (!available) {
-      Alert.alert('Maaf', 'Sensor tidak tersedia');
-      return;
-    }
+    // 2. Login via Biometrik
+    const handleLoginBiometric = async () => {
 
-    // Tampilkan Prompt
-    const { success } = await rnBiometrics.simplePrompt({
-      promptMessage: 'Login Cepat',
-      cancelButtonText: 'Gunakan Password',
-    });
+        // Cek ketersediaan dulu
+        const { available } = await isSensorAvailable();
+        if (!available) {
+            Alert.alert('Maaf', 'Sensor tidak tersedia');
+            return;
+        }
 
-    if (success) {
-      // Jika sidik jari cocok, ambil password dari Keychain
-      const credentials = await Keychain.getGenericPassword();
-      if (credentials) {
-        Alert.alert('Welcome Back!', `Halo ${credentials.username}, Anda berhasil login.`);
-      } else {
-        Alert.alert('Info', 'Tidak ada data tersimpan. Login manual dulu.');
-      }
-    }
-  };
+        const { success } = await simplePrompt(
+            'Login Cepat',
+        );
 
-  return (
-    <View style={{ padding: 20, flex: 1, justifyContent: 'center' }}>
-      <Text>Username: user, Pass: 1234</Text>
-      <TextInput 
-        placeholder="Username" value={username} onChangeText={setUsername} 
-        style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
-      />
-      <TextInput 
-        placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry 
-        style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
-      />
-      
-      <Button title="Login Manual" onPress={handleLoginManual} />
-      <View style={{ height: 20 }} />
-      <Button title="Login dengan Biometrik" onPress={handleLoginBiometric} color="green" />
-    </View>
-  );
+        if (success) {
+
+            // Jika sidik jari cocok, ambil password dari Keychain
+            const credentials = await Keychain.getGenericPassword();
+            if (credentials) {
+                Alert.alert('Welcome Back!', `Halo ${credentials.username}, Anda berhasil login.`);
+            } else {
+                Alert.alert('Info', 'Tidak ada data tersimpan. Login manual dulu.');
+            }
+        }
+    };
+
+    return (
+        <View style={{ padding: 20, flex: 1, justifyContent: 'center' }}>
+            <Text>Username: user, Pass: 1234</Text>
+            <TextInput
+                placeholder="Username" value={username} onChangeText={setUsername}
+                style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
+            />
+            <TextInput
+                placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry
+                style={{ borderWidth: 1, marginBottom: 10, padding: 8 }}
+            />
+
+            <Button title="Login Manual" onPress={handleLoginManual} />
+            <View style={{ height: 20 }} />
+            <Button title="Login dengan Biometrik" onPress={handleLoginBiometric} color="green" />
+        </View>
+    );
 };
 
 export default SecureLogin;
@@ -326,7 +319,6 @@ Implementasikan fitur login di mana token pengguna disimpan secara aman setelah 
 **Tugas:**
 
 * Panggil `simplePrompt` dengan `promptMessage`: "Konfirmasi Transfer Rp 500.000".
-* Atur `cancelButtonText` menjadi "Batalkan Transaksi".
 * **Logic:** Jika hasil `success` adalah `true`, jalankan fungsi `processPayment()`. Jika gagal/batal, tampilkan Alert "Transaksi Dibatalkan".
 
 ### 3\. Penanganan Kasus "Not Enrolled" (Belum Daftar)
