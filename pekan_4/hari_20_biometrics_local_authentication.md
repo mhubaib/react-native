@@ -39,6 +39,7 @@ npm install @sbaiahmed1/react-native-biometrics
 
     ```xml
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     ```
 
 ### B. API, Method, & Options (Penjelasan Mendalam)
