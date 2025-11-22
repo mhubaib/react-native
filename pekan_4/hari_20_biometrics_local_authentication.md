@@ -310,7 +310,7 @@ Di Hari ke-20 ini, kita telah mempelajari:
 Implementasikan fitur login di mana token pengguna disimpan secara aman setelah login manual pertama kali.
 
 * Gunakan `Keychain.setGenericPassword` saat login manual sukses.
-* Buat tombol "Login Cepat" yang memicu `rnBiometrics.simplePrompt`.
+* Buat tombol "Login Cepat" yang memicu `simplePrompt`.
 * Jika sukses, ambil token dengan `Keychain.getGenericPassword` dan arahkan user ke halaman utama.
 
 ### 2\. Konfirmasi Transaksi dengan Konteks (UX Android)
